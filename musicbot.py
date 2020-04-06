@@ -8,6 +8,7 @@ import asyncio
 import itertools
 import sys
 import traceback
+import random
 from async_timeout import timeout
 from functools import partial
 from youtube_dl import YoutubeDL
@@ -24,7 +25,7 @@ logging.basicConfig(stream=log_stream, level=logging.WARNING)
 #ilsanglog.addHandler(handler)
 #####################################################
 
-access_token = os.environ["BOT_TOKEN"]	
+#access_token = os.environ["BOT_TOKEN"]	
 
 def init():
 	global command
@@ -422,7 +423,7 @@ class Music(commands.Cog):
 		await ctx.send(f'**`{ctx.author}`**: 님이 볼륨을 **{vol}%** 로 조정하였습니다.')
 
 	#@commands.command(name='stop')   #정지
-	@commands.command(name='stop', aliases=command[8])   #정지
+	@commands.command(name='!stop', aliases=command[8])   #정지
 	async def stop_(self, ctx):
 		"""Stop the currently playing song and destroy the player.
 		!Warning!
@@ -435,6 +436,128 @@ class Music(commands.Cog):
 
 		await self.cleanup(ctx.guild)
 
+	@commands.command(name='!race', aliases=command[9])   #경주
+	async def modify_(self, ctx, *, msg: str):
+		race_info = []
+		fr = []
+		racing_field = []
+		str_racing_field = []
+		cur_pos = []
+		race_val = []
+		random_pos = []
+		racing_result = []
+		output = ':person_lifting_weights: :woman_cartwheeling: :man_lifting_weights: 신나는 동물 경주! :person_lifting_weights: :woman_cartwheeling: :man_lifting_weights:\n'
+		racing_unit = [':giraffe:', ':elephant:', ':tiger2:', ':hippopotamus:', ':crocodile:',':leopard:',':ox:', ':sheep:', ':pig2:',':dromedary_camel:',':dragon:',':rabbit2:']
+		random.shuffle(racing_unit) 
+		racing_member = msg.split(" ")
+
+		if racing_member[0] == "종료" :
+			await ctx.send('경주 종료!')
+			return
+		elif racing_member[0] == "입장" :
+			if len(racing_member) == 2:
+				await ctx.send('레이스 인원이 1명 입니다.')
+				return
+			elif len(racing_member) >= 14:
+				await ctx.send('레이스 인원이 12명 초과입니다.')
+				return
+			else :
+				race_val = random.sample(range(14, 14+len(racing_member)-1), len(racing_member)-1)
+				for i in range(len(racing_member)-1):
+					fr.append(racing_member[i+1])
+					fr.append(racing_unit[i])
+					fr.append(race_val[i])
+					race_info.append(fr)
+					fr = []
+					for i in range(66):
+						fr.append(" ")
+					racing_field.append(fr)
+					fr = []
+
+				for i in range(len(racing_member)-1):
+					racing_field[i][0] = "|"
+					racing_field[i][64] = race_info[i][1]
+					racing_field[i][65] = "| " + race_info[i][0]
+					str_racing_field.append("".join(racing_field[i]))
+					cur_pos.append(64)
+
+				for i in range(len(racing_member)-1):
+					output +=  str_racing_field[i] + '\n'
+					
+				
+				result_race = await ctx.send(output + ':traffic_light: 3초 후 경주가 시작됩니다!')
+				await asyncio.sleep(1)
+				await result_race.edit(content = output + ':traffic_light: 2초 후 경주가 시작됩니다!')
+				await asyncio.sleep(1)
+				await result_race.edit(content = output + ':traffic_light: 1초 후 경주가 시작됩니다!')
+				await asyncio.sleep(1)
+				await result_race.edit(content = output + ':checkered_flag:  경주 시작!')								
+
+				for i in range(len(racing_member)-1):
+					test = random.sample(range(2,64), race_info[i][2])
+					while len(test) != 14 + len(racing_member)-2 :
+						test.append(1)
+					test.append(1)
+					test.sort(reverse=True)
+					random_pos.append(test)
+				
+				for j in range(len(random_pos[0])):
+					if j%2 == 0:
+						output =  ':person_lifting_weights: :woman_cartwheeling: :man_lifting_weights: 신나는 동물 경주! :person_lifting_weights: :woman_cartwheeling: :man_lifting_weights:\n'
+					else :
+						output =  ':person_doing_cartwheel: :woman_lifting_weights: :man_cartwheeling: 신나는 동물 경주! :person_doing_cartwheel: :woman_lifting_weights: :man_cartwheeling:\n'
+					str_racing_field = []
+					for i in range(len(racing_member)-1):
+						temp_pos = cur_pos[i]
+						racing_field[i][random_pos[i][j]], racing_field[i][temp_pos] = racing_field[i][temp_pos], racing_field[i][random_pos[i][j]]
+						cur_pos[i] = random_pos[i][j]
+						str_racing_field.append("".join(racing_field[i]))
+
+					await asyncio.sleep(1) 
+
+					for i in range(len(racing_member)-1):
+						output +=  str_racing_field[i] + '\n'
+					
+					await result_race.edit(content = output + ':checkered_flag:  경주 시작!')
+				
+				for i in range(len(racing_field)):
+					fr.append(race_info[i][0])
+					fr.append((race_info[i][2])-13)
+					racing_result.append(fr)
+					fr = []
+
+				result = sorted(racing_result, key=lambda x: x[1])
+
+				result_str = ''
+				for i in range(len(result)):
+					if result[i][1] == 1:
+						result[i][1] = ':first_place:'
+					elif result[i][1] == 2:
+						result[i][1] = ':second_place:'
+					elif result[i][1] == 3:
+						result[i][1] = ':third_place:'
+					elif result[i][1] == 4:
+						result[i][1] = ':four:'
+					elif result[i][1] == 5:
+						result[i][1] = ':five:'
+					elif result[i][1] == 6:
+						result[i][1] = ':six:'
+					elif result[i][1] == 7:
+						result[i][1] = ':seven:'
+					elif result[i][1] == 8:
+						result[i][1] = ':eight:'
+					elif result[i][1] == 9:
+						result[i][1] = ':nine:'
+					elif result[i][1] == 10:
+						result[i][1] = ':keycap_ten:'
+					elif result[i][1] == 11:
+						result[i][1] = ':x:'
+					elif result[i][1] == 12:
+						result[i][1] = ':x:'
+					result_str += result[i][1] + "  " + result[i][0] + "  "
+				print(result)
+					
+				await result_race.edit(content = output + ':tada: 경주 종료!\n' + result_str)
 
 bot = commands.Bot(command_prefix=commands.when_mentioned_or(""),description='일상뮤직봇')
 
@@ -446,4 +569,6 @@ async def on_ready():
 	print("===========")
 
 bot.add_cog(Music(bot))
-bot.run(access_token)
+bot.run('Njk2NTI5MTk5NDgxMjI1MjY2.XoqDtQ.qjx2xI3385Mwvda0AS4581iPfAQ')
+#bot.run(access_token)
+
