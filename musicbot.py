@@ -449,7 +449,7 @@ class Music(commands.Cog):
 		race_val = []
 		random_pos = []
 		racing_result = []
-		output = ':person_lifting_weights: :woman_cartwheeling: :man_lifting_weights: 신나는 동물 경주! :person_lifting_weights: :woman_cartwheeling: :man_lifting_weights:\n'
+		output = ':camera: :camera: :camera: 신나는 동물 경주! :camera: :camera: :camera:\n'
 		racing_unit = [':giraffe:', ':elephant:', ':tiger2:', ':hippopotamus:', ':crocodile:',':leopard:',':ox:', ':sheep:', ':pig2:',':dromedary_camel:',':dragon:',':rabbit2:']
 		random.shuffle(racing_unit) 
 		racing_member = msg.split(" ")
@@ -506,9 +506,9 @@ class Music(commands.Cog):
 				
 				for j in range(len(random_pos[0])):
 					if j%2 == 0:
-						output =  ':person_lifting_weights: :woman_cartwheeling: :man_lifting_weights: 신나는 동물 경주! :person_lifting_weights: :woman_cartwheeling: :man_lifting_weights:\n'
+						output =  ':camera: :camera_with_flash: :camera: 신나는 동물 경주! :camera: :camera_with_flash: :camera:\n'
 					else :
-						output =  ':person_doing_cartwheel: :woman_lifting_weights: :man_cartwheeling: 신나는 동물 경주! :person_doing_cartwheel: :woman_lifting_weights: :man_cartwheeling:\n'
+						output =  ':camera_with_flash: :camera: :camera_with_flash: 신나는 동물 경주! :camera_with_flash: :camera: :camera_with_flash:\n'
 					str_racing_field = []
 					for i in range(len(racing_member)-1):
 						temp_pos = cur_pos[i]
@@ -558,7 +558,9 @@ class Music(commands.Cog):
 					elif result[i][1] == 12:
 						result[i][1] = ':x:'
 					result_str += result[i][1] + "  " + result[i][0] + "  "
+					
 				#print(result)
+					
 				await result_race.edit(content = output + ':tada: 경주 종료!\n' + result_str)
 
 bot = commands.Bot(command_prefix=commands.when_mentioned_or(""),description='일상뮤직봇')
