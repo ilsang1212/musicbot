@@ -441,8 +441,8 @@ bot = commands.Bot(command_prefix=commands.when_mentioned_or(""),description='�
 @bot.event
 async def on_ready():
 	print("Logged in as ") #화면에 봇의 아이디, 닉네임이 출력됩니다.
-	print(client.user.name)
-	print(client.user.id)
+	print(bot.user.name)
+	print(bot.user.id)
 	print("===========")
 
 bot.add_cog(Music(bot))
