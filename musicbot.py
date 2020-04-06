@@ -558,8 +558,7 @@ class Music(commands.Cog):
 					elif result[i][1] == 12:
 						result[i][1] = ':x:'
 					result_str += result[i][1] + "  " + result[i][0] + "  "
-				print(result)
-					
+				#print(result)
 				await result_race.edit(content = output + ':tada: 경주 종료!\n' + result_str)
 
 bot = commands.Bot(command_prefix=commands.when_mentioned_or(""),description='일상뮤직봇')
