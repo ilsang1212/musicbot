@@ -485,7 +485,7 @@ class Music(commands.Cog):
 					cur_pos.append(64)
 
 				for i in range(len(racing_member)-1):
-					output +=  str_racing_field[i] + '\n'
+					output +=   "```" + str_racing_field[i] + '\n```'
 					
 				
 				result_race = await ctx.send(output + ':traffic_light: 3초 후 경주가 시작됩니다!')
@@ -519,7 +519,7 @@ class Music(commands.Cog):
 					await asyncio.sleep(1) 
 
 					for i in range(len(racing_member)-1):
-						output +=  str_racing_field[i] + '\n'
+						output +=  "```" + str_racing_field[i] + '\n```'
 					
 					await result_race.edit(content = output + ':checkered_flag:  경주 시작!')
 				
