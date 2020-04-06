@@ -507,9 +507,9 @@ class Music(commands.Cog):
 				
 				for j in range(len(random_pos[0])):
 					if j%2 == 0:
-						output =  ':camera: :camera_with_flash: :camera: 신나는 레이싱! :camera: :camera_with_flash: :camera:\n'
+						output =  ':camera: :camera_with_flash: :camera: 신나는 레이싱! :camera_with_flash: :camera: :camera_with_flash:\n'
 					else :
-						output =  ':camera_with_flash: :camera: :camera_with_flash: 신나는 레이싱! :camera_with_flash: :camera: :camera_with_flash:\n'
+						output =  ':camera_with_flash: :camera: :camera_with_flash: 신나는 레이싱! :camera: :camera_with_flash: :camera:\n'
 					str_racing_field = []
 					for i in range(len(racing_member)-1):
 						temp_pos = cur_pos[i]
