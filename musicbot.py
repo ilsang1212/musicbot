@@ -265,6 +265,7 @@ class Music(commands.Cog):
 			try:
 				channel = ctx.author.voice.channel
 			except AttributeError:
+				await ctx.send(':no_entry_sign: 음성채널에 접속하고 사용해주세요.', delete_after=20)
 				raise InvalidVoiceChannel(':no_entry_sign: 음성채널에 접속하고 사용해주세요.')
 
 		vc = ctx.voice_client
@@ -275,11 +276,13 @@ class Music(commands.Cog):
 			try:
 				await vc.move_to(channel)
 			except asyncio.TimeoutError:
+			       	await ctx.send(f':no_entry_sign: 채널 이동 : <{channel}> 시간 초과.', delete_after=20)
 				raise VoiceConnectionError(f':no_entry_sign: 채널 이동 : <{channel}> 시간 초과.')
 		else:
 			try:
 				await channel.connect()
 			except asyncio.TimeoutError:
+			       	await ctx.send(f':no_entry_sign: 채널 접속 : <{channel}> 시간 초과.', delete_after=20)
 				raise VoiceConnectionError(f':no_entry_sign: 채널 접속: <{channel}> 시간 초과.')
 
 		await ctx.send(f'Connected to : **{channel}**', delete_after=20)
