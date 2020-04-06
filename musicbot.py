@@ -25,7 +25,7 @@ logging.basicConfig(stream=log_stream, level=logging.WARNING)
 #ilsanglog.addHandler(handler)
 #####################################################
 
-#access_token = os.environ["BOT_TOKEN"]	
+access_token = os.environ["BOT_TOKEN"]	
 
 def init():
 	global command
@@ -569,6 +569,5 @@ async def on_ready():
 	print("===========")
 
 bot.add_cog(Music(bot))
-bot.run('Njk2NTI5MTk5NDgxMjI1MjY2.XoqDtQ.qjx2xI3385Mwvda0AS4581iPfAQ')
-#bot.run(access_token)
+bot.run(access_token)
 
