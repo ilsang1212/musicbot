@@ -449,8 +449,9 @@ class Music(commands.Cog):
 		race_val = []
 		random_pos = []
 		racing_result = []
-		output = ':camera: :camera: :camera: 신나는 동물 경주! :camera: :camera: :camera:\n'
-		racing_unit = [':giraffe:', ':elephant:', ':tiger2:', ':hippopotamus:', ':crocodile:',':leopard:',':ox:', ':sheep:', ':pig2:',':dromedary_camel:',':dragon:',':rabbit2:']
+		output = ':camera: :camera: :camera: 신나는 레이싱! :camera: :camera: :camera:\n'
+		#racing_unit = [':giraffe:', ':elephant:', ':tiger2:', ':hippopotamus:', ':crocodile:',':leopard:',':ox:', ':sheep:', ':pig2:',':dromedary_camel:',':dragon:',':rabbit2:'] #동물스킨
+		racing_unit = [':red_car:', ':taxi:', ':bus:', ':trolleybus:', ':race_car:', ':police_car:', ':ambulance:', ':fire_engine:', ':minibus:', ':truck:', ':articulated_lorry:', ':tractor:', ':scooter:', ':manual_wheelchair:', ':motor_scooter:', ':auto_rickshaw:', ':blue_car:', ':bike:', ':helicopter:', ':steam_locomotive:']  #탈것스킨
 		random.shuffle(racing_unit) 
 		racing_member = msg.split(" ")
 
@@ -506,7 +507,7 @@ class Music(commands.Cog):
 				
 				for j in range(len(random_pos[0])):
 					if j%2 == 0:
-						output =  ':camera: :camera_with_flash: :camera: 신나는 동물 경주! :camera: :camera_with_flash: :camera:\n'
+						output =  ':camera: :camera_with_flash: :camera: 신나는 레이싱! :camera: :camera_with_flash: :camera:\n'
 					else :
 						output =  ':camera_with_flash: :camera: :camera_with_flash: 신나는 동물 경주! :camera_with_flash: :camera: :camera_with_flash:\n'
 					str_racing_field = []
