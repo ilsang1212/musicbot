@@ -3,6 +3,7 @@
 import os
 import discord
 from discord.ext import commands
+from discord.ext.commands import CommandNotFound
 import logging
 import asyncio
 import itertools
@@ -439,6 +440,12 @@ async def on_ready():
 	print(bot.user.id)
 	print("===========")
 
+@bot.event
+async def on_command_error(ctx, error):
+	if isinstance(error, CommandNotFound):
+		return
+	raise error
+			       
 bot.add_cog(Music(bot))
 bot.run(access_token)
 
