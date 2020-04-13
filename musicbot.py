@@ -25,8 +25,7 @@ logging.basicConfig(stream=log_stream, level=logging.WARNING)
 #ilsanglog.addHandler(handler)
 #####################################################
 
-#access_token = os.environ["BOT_TOKEN"]	
-access_token = 'NjUzMjY4MzcwODM3MzQwMjIx.XkFbTw.P0rgjQ_YDB0QouoGg_Pwnwc70yc'
+access_token = os.environ["BOT_TOKEN"]	
 
 def init():
 	global command
