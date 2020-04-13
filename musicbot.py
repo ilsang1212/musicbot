@@ -291,8 +291,8 @@ class Music(commands.Cog):
 		vc = ctx.voice_client
 
 		if not vc:
-			#await ctx.invoke(self.connect_)
-			return await ctx.send(':mute: 음성채널에 접속후 사용해주세요.', delete_after=20)
+			await ctx.invoke(self.connect_)
+			#return await ctx.send(':mute: 음성채널에 접속후 사용해주세요.', delete_after=20)
 
 		player = self.get_player(ctx)
 
