@@ -25,7 +25,8 @@ logging.basicConfig(stream=log_stream, level=logging.WARNING)
 #ilsanglog.addHandler(handler)
 #####################################################
 
-access_token = os.environ["BOT_TOKEN"]	
+#access_token = os.environ["BOT_TOKEN"]	
+access_token = 'NjUzMjY4MzcwODM3MzQwMjIx.XkFbTw.P0rgjQ_YDB0QouoGg_Pwnwc70yc'
 
 def init():
 	global command
@@ -42,7 +43,6 @@ def init():
 		fc = tmp_command.split(', ')
 		command.append(fc)
 		fc = []
-		#command.append(command_inputData[i][12:].rstrip('\n'))     #command[0] ~ [28] : 명령어
 
 	del command[0]
 
@@ -158,7 +158,7 @@ class MusicPlayer:
 		"""Our main player loop."""
 		await self.bot.wait_until_ready()
 
-		while not self.bot.is_closed():
+		while True:
 			self.next.clear()
 
 			try:
@@ -250,22 +250,13 @@ class Music(commands.Cog):
 
 		return player
 
-	#@commands.command(name='!connect', aliases=['join'])   #채널 접속
-	@commands.command(name='!connect', aliases=command[0])   #채널 접속
+	@commands.command(name=command[0][0], aliases=command[0][1:])   #채널 접속
 	async def connect_(self, ctx, *, channel: discord.VoiceChannel=None):
-		"""Connect to voice.
-		Parameters
-		------------
-		channel: discord.VoiceChannel [Optional]
-			The channel to connect to. If a channel is not specified, an attempt to join the voice channel you are in
-			will be made.
-		This command also handles moving the bot to different channels.
-		"""
+
 		if not channel:
 			try:
 				channel = ctx.author.voice.channel
 			except AttributeError:
-				await ctx.send(':no_entry_sign: 음성채널에 접속하고 사용해주세요.', delete_after=20)
 				raise InvalidVoiceChannel(':no_entry_sign: 음성채널에 접속하고 사용해주세요.')
 
 		vc = ctx.voice_client
@@ -276,19 +267,16 @@ class Music(commands.Cog):
 			try:
 				await vc.move_to(channel)
 			except asyncio.TimeoutError:
-				await ctx.send(f':no_entry_sign: 채널 이동 : <{channel}> 시간 초과.', delete_after=20)
 				raise VoiceConnectionError(f':no_entry_sign: 채널 이동 : <{channel}> 시간 초과.')
 		else:
 			try:
 				await channel.connect()
 			except asyncio.TimeoutError:
-				await ctx.send(f':no_entry_sign: 채널 접속 : <{channel}> 시간 초과.', delete_after=20)
 				raise VoiceConnectionError(f':no_entry_sign: 채널 접속: <{channel}> 시간 초과.')
 
 		await ctx.send(f'Connected to : **{channel}**', delete_after=20)
 
-	#@commands.command(name='!play', aliases=['sing'])     #재생
-	@commands.command(name='!play', aliases=command[1])     #재생
+	@commands.command(name=command[1][0], aliases=command[1][1:])     #재생
 	async def play_(self, ctx, *, search: str):
 		"""Request a song and add it to the queue.
 		This command attempts to join a valid voice channel if the bot is not already in one.
@@ -303,7 +291,8 @@ class Music(commands.Cog):
 		vc = ctx.voice_client
 
 		if not vc:
-			await ctx.invoke(self.connect_)
+			#await ctx.invoke(self.connect_)
+			return await ctx.send(':mute: 음성채널에 접속후 사용해주세요.', delete_after=20)
 
 		player = self.get_player(ctx)
 
@@ -313,8 +302,7 @@ class Music(commands.Cog):
 
 		await player.queue.put(source)
 
-	#@commands.command(name='!pause')    #일시정지
-	@commands.command(name='!pause', aliases=command[2])    #일시정지
+	@commands.command(name=command[2][0], aliases=command[2][1:])    #일시정지
 	async def pause_(self, ctx):
 		"""Pause the currently playing song."""
 		vc = ctx.voice_client
@@ -327,8 +315,7 @@ class Music(commands.Cog):
 		vc.pause()
 		await ctx.send(f'**`{ctx.author}`**: 음악 정지!')
 
-	#@commands.command(name='!resume')   #다시재생
-	@commands.command(name='!resume', aliases=command[3])   #다시재생
+	@commands.command(name=command[3][0], aliases=command[3][1:])   #다시재생
 	async def resume_(self, ctx):
 		"""Resume the currently paused song."""
 		vc = ctx.voice_client
@@ -341,8 +328,7 @@ class Music(commands.Cog):
 		vc.resume()
 		await ctx.send(f'**`{ctx.author}`**: 음악 다시 재생!')
 
-	#@commands.command(name='!skip')   #스킵
-	@commands.command(name='!skip', aliases=command[4])   #스킵
+	@commands.command(name=command[4][0], aliases=command[4][1:])   #스킵
 	async def skip_(self, ctx):
 		"""Skip the song."""
 		vc = ctx.voice_client
@@ -358,8 +344,7 @@ class Music(commands.Cog):
 		vc.stop()
 		await ctx.send(f'**`{ctx.author}`**: 음악 스킵!')
 
-	#@commands.command(name='!queue', aliases=['q', 'playlist'])   #재생목록
-	@commands.command(name='!queue', aliases=command[5])   #재생목록
+	@commands.command(name=command[5][0], aliases=command[5][1:])   #재생목록
 	async def queue_info(self, ctx):
 		"""Retrieve a basic queue of upcoming songs."""
 		vc = ctx.voice_client
@@ -372,15 +357,17 @@ class Music(commands.Cog):
 			return await ctx.send(':mute: 더 이상 재생할 곡이 없습니다.')
 
 		# Grab up to 5 entries from the queue...
-		upcoming = list(itertools.islice(player.queue._queue, 0, 5))
-
-		fmt = '\n'.join(f'**`{_["title"]}`**' for _ in upcoming)
-		embed = discord.Embed(title=f'Upcoming - Next {len(upcoming)}', description=fmt)
+		upcoming = list(itertools.islice(player.queue._queue, 0, 10))
+		fmt = ''
+		for i in range(len(upcoming)):
+			fmt += '**' + str(i+1) + ' : ' + upcoming[i]['title'] + '**\n'
+		
+		#fmt = '\n'.join(f'**`{_["title"]}`**' for _ in upcoming)
+		embed = discord.Embed(title=f'Upcoming - Next {len(upcoming)}', description=fmt, color=0xff00ff)
 
 		await ctx.send(embed=embed)
 
-	#@commands.command(name='!now_playing', aliases=['np', 'current', 'currentsong', 'playing'])   #현재 재생음악
-	@commands.command(name='!now_playing', aliases=command[6])   #현재 재생음악
+	@commands.command(name=command[6][0], aliases=command[6][1:])   #현재 재생음악
 	async def now_playing_(self, ctx):
 		"""Display information about the currently playing song."""
 		vc = ctx.voice_client
@@ -400,15 +387,8 @@ class Music(commands.Cog):
 
 		player.np = await ctx.send(f'**Now Playing : ** `{vc.source.title}` 'f'  requested by  `{vc.source.requester}`')
 
-	#@commands.command(name='!volume', aliases=['vol'])   #볼륨조정
-	@commands.command(name='!volume', aliases=command[7])   #볼륨조정
+	@commands.command(name=command[7][0], aliases=command[7][1:])   #볼륨조정
 	async def change_volume(self, ctx, *, vol: float):
-		"""Change the player volume.
-		Parameters
-		------------
-		volume: float or int [Required]
-			The volume to set the player to in percentage. This must be between 1 and 100.
-		"""
 		vc = ctx.voice_client
 
 		if not vc or not vc.is_connected():
@@ -425,8 +405,7 @@ class Music(commands.Cog):
 		player.volume = vol / 100
 		await ctx.send(f'**`{ctx.author}`**: 님이 볼륨을 **{vol}%** 로 조정하였습니다.')
 
-	#@commands.command(name='stop')   #정지
-	@commands.command(name='!stop', aliases=command[8])   #정지
+	@commands.command(name=command[8][0], aliases=command[8][1:])   #정지
 	async def stop_(self, ctx):
 		"""Stop the currently playing song and destroy the player.
 		!Warning!
@@ -439,130 +418,18 @@ class Music(commands.Cog):
 
 		await self.cleanup(ctx.guild)
 
-	@commands.command(name='!race', aliases=command[9])   #경주
-	async def modify_(self, ctx, *, msg: str):
-		race_info = []
-		fr = []
-		racing_field = []
-		str_racing_field = []
-		cur_pos = []
-		race_val = []
-		random_pos = []
-		racing_result = []
-		output = ':camera: :camera: :camera: 신나는 레이싱! :camera: :camera: :camera:\n'
-		#racing_unit = [':giraffe:', ':elephant:', ':tiger2:', ':hippopotamus:', ':crocodile:',':leopard:',':ox:', ':sheep:', ':pig2:',':dromedary_camel:',':dragon:',':rabbit2:'] #동물스킨
-		racing_unit = [':red_car:', ':taxi:', ':bus:', ':trolleybus:', ':race_car:', ':police_car:', ':ambulance:', ':fire_engine:', ':minibus:', ':truck:', ':articulated_lorry:', ':tractor:', ':scooter:', ':manual_wheelchair:', ':motor_scooter:', ':auto_rickshaw:', ':blue_car:', ':bike:', ':helicopter:', ':steam_locomotive:']  #탈것스킨
-		random.shuffle(racing_unit) 
-		racing_member = msg.split(" ")
+	@commands.command(name=command[9][0], aliases=command[9][1:])   #삭제
+	async def remove_(self, ctx, *, msg : int):
+		player = self.get_player(ctx)
 
-		if racing_member[0] == "종료" :
-			await ctx.send('경주 종료!')
-			return
-		elif racing_member[0] == "입장" :
-			if len(racing_member) == 2:
-				await ctx.send('레이스 인원이 1명 입니다.')
-				return
-			elif len(racing_member) >= 14:
-				await ctx.send('레이스 인원이 12명 초과입니다.')
-				return
-			else :
-				race_val = random.sample(range(14, 14+len(racing_member)-1), len(racing_member)-1)
-				for i in range(len(racing_member)-1):
-					fr.append(racing_member[i+1])
-					fr.append(racing_unit[i])
-					fr.append(race_val[i])
-					race_info.append(fr)
-					fr = []
-					for i in range(66):
-						fr.append(" ")
-					racing_field.append(fr)
-					fr = []
+		# If download is False, source will be a dict which will be used later to regather the stream.
+		# If download is True, source will be a discord.FFmpegPCMAudio with a VolumeTransformer.
+		
+		tmp = player.queue._queue[msg-1]
 
-				for i in range(len(racing_member)-1):
-					racing_field[i][0] = "|"
-					racing_field[i][64] = race_info[i][1]
-					racing_field[i][65] = "| " + race_info[i][0]
-					str_racing_field.append("".join(racing_field[i]))
-					cur_pos.append(64)
+		player.queue._queue.remove(tmp)
 
-				for i in range(len(racing_member)-1):
-					output +=  str_racing_field[i] + '\n'
-					
-				
-				result_race = await ctx.send(output + ':traffic_light: 3초 후 경주가 시작됩니다!')
-				await asyncio.sleep(1)
-				await result_race.edit(content = output + ':traffic_light: 2초 후 경주가 시작됩니다!')
-				await asyncio.sleep(1)
-				await result_race.edit(content = output + ':traffic_light: 1초 후 경주가 시작됩니다!')
-				await asyncio.sleep(1)
-				await result_race.edit(content = output + ':checkered_flag:  경주 시작!')								
-
-				for i in range(len(racing_member)-1):
-					test = random.sample(range(2,64), race_info[i][2])
-					while len(test) != 14 + len(racing_member)-2 :
-						test.append(1)
-					test.append(1)
-					test.sort(reverse=True)
-					random_pos.append(test)
-				
-				for j in range(len(random_pos[0])):
-					if j%2 == 0:
-						output =  ':camera: :camera_with_flash: :camera: 신나는 레이싱! :camera_with_flash: :camera: :camera_with_flash:\n'
-					else :
-						output =  ':camera_with_flash: :camera: :camera_with_flash: 신나는 레이싱! :camera: :camera_with_flash: :camera:\n'
-					str_racing_field = []
-					for i in range(len(racing_member)-1):
-						temp_pos = cur_pos[i]
-						racing_field[i][random_pos[i][j]], racing_field[i][temp_pos] = racing_field[i][temp_pos], racing_field[i][random_pos[i][j]]
-						cur_pos[i] = random_pos[i][j]
-						str_racing_field.append("".join(racing_field[i]))
-
-					await asyncio.sleep(1) 
-
-					for i in range(len(racing_member)-1):
-						output +=  str_racing_field[i] + '\n'
-					
-					await result_race.edit(content = output + ':checkered_flag:  경주 시작!')
-				
-				for i in range(len(racing_field)):
-					fr.append(race_info[i][0])
-					fr.append((race_info[i][2])-13)
-					racing_result.append(fr)
-					fr = []
-
-				result = sorted(racing_result, key=lambda x: x[1])
-
-				result_str = ''
-				for i in range(len(result)):
-					if result[i][1] == 1:
-						result[i][1] = ':first_place:'
-					elif result[i][1] == 2:
-						result[i][1] = ':second_place:'
-					elif result[i][1] == 3:
-						result[i][1] = ':third_place:'
-					elif result[i][1] == 4:
-						result[i][1] = ':four:'
-					elif result[i][1] == 5:
-						result[i][1] = ':five:'
-					elif result[i][1] == 6:
-						result[i][1] = ':six:'
-					elif result[i][1] == 7:
-						result[i][1] = ':seven:'
-					elif result[i][1] == 8:
-						result[i][1] = ':eight:'
-					elif result[i][1] == 9:
-						result[i][1] = ':nine:'
-					elif result[i][1] == 10:
-						result[i][1] = ':keycap_ten:'
-					elif result[i][1] == 11:
-						result[i][1] = ':x:'
-					elif result[i][1] == 12:
-						result[i][1] = ':x:'
-					result_str += result[i][1] + "  " + result[i][0] + "  "
-					
-				#print(result)
-					
-				await result_race.edit(content = output + ':tada: 경주 종료!\n' + result_str)
+		await ctx.send(f'**`{ctx.author}`**: 님이 **`{str(tmp["title"])}`** 을/를 재생목록에서 삭제하였습니다.')
 
 bot = commands.Bot(command_prefix=commands.when_mentioned_or(""),description='일상뮤직봇')
 
