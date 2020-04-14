@@ -169,6 +169,8 @@ class MusicPlayer:
 			except asyncio.TimeoutError:
 				return self.destroy(self._guild)
 			'''
+			       
+			source = await self.queue.get()
 
 			if not isinstance(source, YTDLSource):
 				# Source was probably a stream (not downloaded)
