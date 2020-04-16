@@ -67,7 +67,7 @@ ytdlopts = {
 }
 
 ffmpegopts = {
-	'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 30',
+	'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 60',
 	'options': '-vn'
 }
 
@@ -161,17 +161,15 @@ class MusicPlayer:
 		while True:
 			self.next.clear()
 
-			'''
+			
 			try:
 				# Wait for the next song. If we timeout cancel the player and disconnect...
-				async with timeout(36000):  # 5 minutes...
+				async with timeout(60):  # 5 minutes...
 					source = await self.queue.get()
 			except asyncio.TimeoutError:
 				return self.destroy(self._guild)
-			'''
-			       
-			source = await self.queue.get()
-
+			
+			
 			if not isinstance(source, YTDLSource):
 				# Source was probably a stream (not downloaded)
 				# So we should regather to prevent stream expiration
