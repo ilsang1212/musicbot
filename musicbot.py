@@ -272,7 +272,7 @@ class Music(commands.Cog):
 				raise VoiceConnectionError(f':no_entry_sign: 채널 이동 : <{channel}> 시간 초과.')
 		else:
 			try:
-				await channel.connect()
+				await channel.connect(reconnect=True)
 			except asyncio.TimeoutError:
 				raise VoiceConnectionError(f':no_entry_sign: 채널 접속: <{channel}> 시간 초과.')
 
