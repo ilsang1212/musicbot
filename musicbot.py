@@ -14,6 +14,7 @@ from async_timeout import timeout
 from functools import partial
 from youtube_dl import YoutubeDL
 from io import StringIO
+import time
 
 ##################### 로깅 ###########################
 log_stream = StringIO()    
@@ -26,7 +27,9 @@ logging.basicConfig(stream=log_stream, level=logging.WARNING)
 #ilsanglog.addHandler(handler)
 #####################################################
 
-access_token = os.environ["BOT_TOKEN"]	
+#access_token = os.environ["BOT_TOKEN"]	
+
+access_token = 'Njk2NTI5MTk5NDgxMjI1MjY2.XpRf_w.re_3u4tB3qbnMc_QEm-UQk2gTYU'
 
 def init():
 	global command
@@ -90,6 +93,8 @@ class YTDLSource(discord.PCMVolumeTransformer):
 
 		self.title = data.get('title')
 		self.web_url = data.get('webpage_url')
+		self.duration = data.get('duration')
+		self.thumbnail = data.get('thumbnail')
 
 	def __getitem__(self, item: str):
 		"""Allows us to access attributes similar to a dict.
@@ -107,13 +112,17 @@ class YTDLSource(discord.PCMVolumeTransformer):
 		if 'entries' in data:
 			# take first item from a playlist
 			data = data['entries'][0]
-
-		await ctx.send(f'```ini\n[Added {data["title"]} to the Queue.]\n```', delete_after=15)
+	
+		#await ctx.send(f'```ini\n[재생목록에 "{data["title"]}" 를 추가했습니다.]\n```', delete_after=15)
+		embed = discord.Embed(title="[재생목록 추가]", description="제목 : " + data["title"] + "\n재생시간 : " + time.strftime('%H:%M:%S', time.gmtime(data['duration'])), color=0x62c1cc)
+		embed.set_thumbnail(url=data['thumbnail'])
+		embed.set_footer(text= 'requested by  ' f'`{ctx.author}`')
+		await ctx.send(embed=embed, delete_after=15)
 
 		if download:
 			source = ytdl.prepare_filename(data)
 		else:
-			return {'webpage_url': data['webpage_url'], 'requester': ctx.author, 'title': data['title']}
+			return {'webpage_url': data['webpage_url'], 'requester': ctx.author, 'title': data['title'], 'duration' : data['duration'], 'thumbnail' : data['thumbnail']}
 
 		return cls(discord.FFmpegPCMAudio(source, **ffmpegopts), data=data, requester=ctx.author)
 
@@ -169,7 +178,12 @@ class MusicPlayer:
 			except asyncio.TimeoutError:
 				return self.destroy(self._guild)
 			
-			
+			#play_duration = source['duration']
+			#url_thumbnail = source['thumbnail']
+
+			#del source['duration']
+			#del source['thumbnail']
+
 			if not isinstance(source, YTDLSource):
 				# Source was probably a stream (not downloaded)
 				# So we should regather to prevent stream expiration
@@ -184,7 +198,11 @@ class MusicPlayer:
 			self.current = source
 
 			self._guild.voice_client.play(source, after=lambda _: self.bot.loop.call_soon_threadsafe(self.next.set))
-			self.np = await self._channel.send(f'**Now Playing : **  `{source.title}`  requested by  ' f'`{source.requester}`')
+			embed = discord.Embed(title=source.title, description="재생시간 : " + time.strftime('%H:%M:%S', time.gmtime(source['duration'])), color=0x62c1cc)
+			embed.set_thumbnail(url=source['thumbnail'])
+			embed.set_footer(text= 'requested by  ' f'`{source.requester}`')
+			self.np = await self._channel.send(embed=embed)
+			#self.np = await self._channel.send(f'**Now Playing : **  `{source.title}`  requested by  ' f'`{source.requester}`')
 			await self.next.wait()
 
 			# Make sure the FFmpeg process is cleaned up.
@@ -280,14 +298,7 @@ class Music(commands.Cog):
 
 	@commands.command(name=command[1][0], aliases=command[1][1:])     #재생
 	async def play_(self, ctx, *, search: str):
-		"""Request a song and add it to the queue.
-		This command attempts to join a valid voice channel if the bot is not already in one.
-		Uses YTDL to automatically search and retrieve a song.
-		Parameters
-		------------
-		search: str [Required]
-			The song to search and retrieve using YTDL. This could be a simple search, an ID or URL.
-		"""
+		"""음악을 재생합니다. !재생 URL 또는 검색어"""
 		await ctx.trigger_typing()
 
 		vc = ctx.voice_client
@@ -306,7 +317,7 @@ class Music(commands.Cog):
 
 	@commands.command(name=command[2][0], aliases=command[2][1:])    #일시정지
 	async def pause_(self, ctx):
-		"""Pause the currently playing song."""
+		"""현재 재생중인 곡을 일시정지 합니다."""
 		vc = ctx.voice_client
 
 		if not vc or not vc.is_playing():
@@ -319,7 +330,7 @@ class Music(commands.Cog):
 
 	@commands.command(name=command[3][0], aliases=command[3][1:])   #다시재생
 	async def resume_(self, ctx):
-		"""Resume the currently paused song."""
+		"""현재 재생중인 곡을 다시 재생 합니다."""
 		vc = ctx.voice_client
 
 		if not vc or not vc.is_connected():
@@ -332,7 +343,7 @@ class Music(commands.Cog):
 
 	@commands.command(name=command[4][0], aliases=command[4][1:])   #스킵
 	async def skip_(self, ctx):
-		"""Skip the song."""
+		"""현재 재생중인 곡을 스킵합니다."""
 		vc = ctx.voice_client
 
 		if not vc or not vc.is_connected():
@@ -348,7 +359,7 @@ class Music(commands.Cog):
 
 	@commands.command(name=command[5][0], aliases=command[5][1:])   #재생목록
 	async def queue_info(self, ctx):
-		"""Retrieve a basic queue of upcoming songs."""
+		"""등록된 플레이리스트를 보여줍니다."""
 		vc = ctx.voice_client
 
 		if not vc or not vc.is_connected():
@@ -362,7 +373,7 @@ class Music(commands.Cog):
 		upcoming = list(itertools.islice(player.queue._queue, 0, 10))
 		fmt = ''
 		for i in range(len(upcoming)):
-			fmt += '**' + str(i+1) + ' : ' + upcoming[i]['title'] + '**\n'
+			fmt += '**' + str(i+1) + ' : ' + upcoming[i]['title'] + '**\n      재생시간 : ' + time.strftime('%H:%M:%S', time.gmtime(upcoming[i]['duration'])) + '\n'
 		
 		#fmt = '\n'.join(f'**`{_["title"]}`**' for _ in upcoming)
 		embed = discord.Embed(title=f'Upcoming - Next {len(upcoming)}', description=fmt, color=0xff00ff)
@@ -371,7 +382,7 @@ class Music(commands.Cog):
 
 	@commands.command(name=command[6][0], aliases=command[6][1:])   #현재 재생음악
 	async def now_playing_(self, ctx):
-		"""Display information about the currently playing song."""
+		"""현재 재생중인 곡 정보입니다."""
 		vc = ctx.voice_client
 
 		if not vc or not vc.is_connected():
@@ -387,10 +398,16 @@ class Music(commands.Cog):
 		except discord.HTTPException:
 			pass
 
-		player.np = await ctx.send(f'**Now Playing : ** `{vc.source.title}` 'f'  requested by  `{vc.source.requester}`')
+		embed = discord.Embed(title=vc.source.title, description="재생시간 : " + time.strftime('%H:%M:%S', time.gmtime(vc.source['duration'])), color=0x62c1cc)
+		embed.set_thumbnail(url= vc.source['thumbnail'])
+		embed.set_footer(text= 'requested by  ' f'`{vc.source.requester}`')
+		player.np = await ctx.send(embed=embed, delete_after=20)
+
+		#player.np = await ctx.send(f'**Now Playing : ** `{vc.source.title}` 'f'  requested by  `{vc.source.requester}`')
 
 	@commands.command(name=command[7][0], aliases=command[7][1:])   #볼륨조정
 	async def change_volume(self, ctx, *, vol: float):
+		"""볼륨을 조절합니다. (1~100)"""
 		vc = ctx.voice_client
 
 		if not vc or not vc.is_connected():
@@ -409,10 +426,7 @@ class Music(commands.Cog):
 
 	@commands.command(name=command[8][0], aliases=command[8][1:])   #정지
 	async def stop_(self, ctx):
-		"""Stop the currently playing song and destroy the player.
-		!Warning!
-			This will destroy the player assigned to your guild, also deleting any queued songs and settings.
-		"""
+		"""재생중인 음악을 정지하고 플레이리스트를 초기화 시킵니다."""
 		vc = ctx.voice_client
 
 		if not vc or not vc.is_connected():
@@ -422,6 +436,7 @@ class Music(commands.Cog):
 
 	@commands.command(name=command[9][0], aliases=command[9][1:])   #삭제
 	async def remove_(self, ctx, *, msg : int):
+		"""플레이리스트에 있는 곡을 삭제합니다. ex) !삭제 1"""
 		player = self.get_player(ctx)
 
 		# If download is False, source will be a dict which will be used later to regather the stream.
@@ -432,6 +447,26 @@ class Music(commands.Cog):
 		player.queue._queue.remove(tmp)
 
 		await ctx.send(f'**`{ctx.author}`**: 님이 **`{str(tmp["title"])}`** 을/를 재생목록에서 삭제하였습니다.')
+
+	@commands.command(name=command[10][0], aliases=command[10][1:])   #도움말
+	async def menu_(self, ctx):
+		command_list = ''
+		command_list += ','.join(command[0]) + '\n'     #!입장
+		command_list += ','.join(command[1]) + ' [검색어] or [url]\n'     #!재생
+		command_list += ','.join(command[2]) + '\n'     #!일시정지
+		command_list += ','.join(command[3]) + '\n'     #!다시재생
+		command_list += ','.join(command[4]) + '\n'     #!스킵
+		command_list += ','.join(command[5]) + '\n'     #!목록
+		command_list += ','.join(command[6]) + '\n'     #!현재재생
+		command_list += ','.join(command[7]) + '\n'     #!볼륨
+		command_list += ','.join(command[8]) + '\n'     #!정지
+		command_list += ','.join(command[9]) + '\n'     #!삭제
+		embed = discord.Embed(
+				title = "----- 명령어 -----",
+				description= '```' + command_list + '```',
+				color=0xff00ff
+				)
+		await ctx.send( embed=embed, tts=False)
 
 bot = commands.Bot(command_prefix=commands.when_mentioned_or(""),description='일상뮤직봇')
 
