@@ -275,24 +275,31 @@ class Music(commands.Cog):
 			try:
 				channel = ctx.author.voice.channel
 			except AttributeError:
-				raise InvalidVoiceChannel(':no_entry_sign: 음성채널에 접속하고 사용해주세요.')
+				await ctx.send(':no_entry_sign: 음성채널에 접속하고 사용해주세요.', delete_after=20)
+				#raise InvalidVoiceChannel(':no_entry_sign: 음성채널에 접속하고 사용해주세요.')
+				return False
 
 		vc = ctx.voice_client
 
 		if vc:
 			if vc.channel.id == channel.id:
-				return
+				return True
 			try:
 				await vc.move_to(channel)
 			except asyncio.TimeoutError:
-				raise VoiceConnectionError(f':no_entry_sign: 채널 이동 : <{channel}> 시간 초과.')
+				await ctx.send(f':no_entry_sign: 채널 이동 : <{channel}> 시간 초과. 좀 있다 시도해주세요.', delete_after=20)
+				#raise VoiceConnectionError(f':no_entry_sign: 채널 이동 : <{channel}> 시간 초과.')
+				return False
 		else:
 			try:
 				await channel.connect(reconnect=True)
 			except asyncio.TimeoutError:
-				raise VoiceConnectionError(f':no_entry_sign: 채널 접속: <{channel}> 시간 초과.')
+				await ctx.send(f':no_entry_sign: 채널 접속: <{channel}> 시간 초과. 좀 있다 시도해주세요.', delete_after=20)
+				#raise VoiceConnectionError(f':no_entry_sign: 채널 접속: <{channel}> 시간 초과.')
+				return False
 
 		await ctx.send(f'Connected to : **{channel}**', delete_after=20)
+		return True
 
 	@commands.command(name=command[1][0], aliases=command[1][1:])     #재생
 	async def play_(self, ctx, *, search: str):
@@ -302,7 +309,9 @@ class Music(commands.Cog):
 		vc = ctx.voice_client
 
 		if not vc:
-			await ctx.invoke(self.connect_)
+			connenct_result = await ctx.invoke(self.connect_)
+			if connenct_result == False:
+				return
 			#return await ctx.send(':mute: 음성채널에 접속후 사용해주세요.', delete_after=20)
 
 		player = self.get_player(ctx)
@@ -466,7 +475,7 @@ class Music(commands.Cog):
 				)
 		await ctx.send( embed=embed, tts=False)
 
-bot = commands.Bot(command_prefix=commands.when_mentioned_or(""),description='일상뮤직봇')
+bot = commands.Bot(command_prefix="", help_command = None, description='일상뮤직봇')
 
 @bot.event
 async def on_ready():
@@ -474,13 +483,17 @@ async def on_ready():
 	print(bot.user.name)
 	print(bot.user.id)
 	print("===========")
+	
 	await bot.change_presence(status=discord.Status.dnd, activity=discord.Game(name=command[10][0], type=1), afk = False)
 
 @bot.event
 async def on_command_error(ctx, error):
 	if isinstance(error, CommandNotFound):
 		return
+	elif isinstance(error, discord.ext.commands.MissingRequiredArgument):
+		return
 	raise error
+
 			       
 bot.add_cog(Music(bot))
 bot.run(access_token)
