@@ -448,7 +448,10 @@ class Music(commands.Cog):
 
 		# If download is False, source will be a dict which will be used later to regather the stream.
 		# If download is True, source will be a discord.FFmpegPCMAudio with a VolumeTransformer.
-		
+		if len(player.queue._queue) < msg :
+			await ctx.send(':mute: 재생목록에 등록되어 있지 않은 번호 입니다. 다시 입력해주세요.')
+			return
+				       
 		tmp = player.queue._queue[msg-1]
 
 		player.queue._queue.remove(tmp)
