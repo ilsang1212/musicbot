@@ -533,7 +533,12 @@ bot.add_cog(Music(bot))
 
 @bot.event
 async def on_ready():
-    print('Logged in as:\n{0.user.name}\n{0.user.id}'.format(bot))
+	print("Logged in as ") #화면에 봇의 아이디, 닉네임이 출력됩니다.
+	print(bot.user.name)
+	print(bot.user.id)
+	print("===========")
+	
+	await bot.change_presence(status=discord.Status.dnd, activity=discord.Game(name=command[12][0], type=1), afk = False)
 
 @bot.event
 async def on_command_error(ctx, error):
