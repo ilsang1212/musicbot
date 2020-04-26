@@ -509,15 +509,15 @@ class Music(commands.Cog):
     @commands.command(name=command[12][0], aliases=command[12][1:])   #도움말
     async def menu_(self, ctx):
         command_list = ''
-        command_list += ','.join(command[0]) + '*관리자만 가능\n'     #!들어가자
-        command_list += ','.join(command[1]) + '*관리자만 가능\n'     #!나가자
+        command_list += ','.join(command[0]) + '\n'     #!들어가자
+        command_list += ','.join(command[1]) + '\n'     #!나가자
         command_list += ','.join(command[2]) + ' [검색어] or [url]\n'     #!재생
         command_list += ','.join(command[3]) + '\n'     #!일시정지
         command_list += ','.join(command[4]) + '\n'     #!다시재생
         command_list += ','.join(command[5]) + '\n'     #!스킵
-        command_list += ','.join(command[6]) + '혹은 명령어 + [숫자]\n'     #!목록
+        command_list += ','.join(command[6]) + ' 혹은 명령어 + [숫자]\n'     #!목록
         command_list += ','.join(command[7]) + '\n'     #!현재재생
-        command_list += ','.join(command[8]) + '\n'     #!볼륨
+        command_list += ','.join(command[8]) + ' [숫자 1~100]\n'     #!볼륨
         command_list += ','.join(command[9]) + '\n'     #!정지
         command_list += ','.join(command[10]) + '\n'     #!삭제
         command_list += ','.join(command[11]) + '\n'     #!섞기
