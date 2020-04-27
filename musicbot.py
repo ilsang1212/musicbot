@@ -31,7 +31,8 @@ logging.basicConfig(stream=log_stream, level=logging.WARNING)
 #ilsanglog.addHandler(handler)
 #####################################################
 
-access_token = os.environ["BOT_TOKEN"]	
+#access_token = os.environ["BOT_TOKEN"]	
+access_token = 'NTAzOTA5NDIyMzg5NTI2NTI5.XqZb5A.IYX5a1Ov4u9T0un4mhx7essOLCA'
 
 def init():
 	global command
@@ -162,21 +163,6 @@ class YTDLSource(discord.PCMVolumeTransformer):
 
 	@staticmethod
 	def parse_duration(duration: int):
-		'''
-		minutes, seconds = divmod(duration, 60)
-		hours, minutes = divmod(minutes, 60)
-		days, hours = divmod(hours, 24)
-
-		duration = []
-		if days > 0:
-			duration.append('{} 일'.format(days))
-		if hours > 0:
-			duration.append('{} 시간'.format(hours))
-		if minutes > 0:
-			duration.append('{} 분'.format(minutes))
-		if seconds > 0:
-			duration.append('{} 초'.format(seconds))
-		'''
 		return time.strftime('%H:%M:%S', time.gmtime(duration))
 
 
@@ -227,6 +213,7 @@ class VoiceState:
 	def __init__(self, bot: commands.Bot, ctx: commands.Context):
 		self.bot = bot
 		self._ctx = ctx
+		self._cog = ctx.cog
 
 		self.current = None
 		self.voice = None
@@ -303,6 +290,7 @@ class VoiceState:
 			await self.voice.disconnect()
 			self.voice = None
 
+		self.bot.loop.create_task(self._cog.cleanup(self._ctx))
 
 class Music(commands.Cog):
 	def __init__(self, bot: commands.Bot):
@@ -342,6 +330,9 @@ class Music(commands.Cog):
 
 		ctx.voice_state.voice = await destination.connect()
 	'''
+	async def cleanup(self, ctx: commands.Context):
+		del self.voice_states[ctx.guild.id]
+
 	@commands.command(name=command[0][0], aliases=command[0][1:])
 	#@commands.has_permissions(manage_guild=True)
 	async def _summon(self, ctx: commands.Context, *, channel: discord.VoiceChannel = None):
@@ -489,7 +480,7 @@ class Music(commands.Cog):
 			try:
 				source = await YTDLSource.create_source(ctx, search, loop=self.bot.loop)
 			except YTDLError as e:
-				await ctx.send('```에러가 발생했습니다 : {}```'.format(str(e)))
+				await ctx.send('에러가 발생했습니다 : {}'.format(str(e)))
 			else:
 				song = Song(source)
 
@@ -500,11 +491,11 @@ class Music(commands.Cog):
 	@_play.before_invoke
 	async def ensure_voice_state(self, ctx: commands.Context):
 		if not ctx.author.voice or not ctx.author.voice.channel:
-			raise commands.CommandError('```음성채널에 접속 후 사용해주십시오.```')
+			raise commands.CommandError('음성채널에 접속 후 사용해주십시오.')
 
 		if ctx.voice_client:
 			if ctx.voice_client.channel != ctx.author.voice.channel:
-				raise commands.CommandError('```봇이 이미 음성채널에 접속해 있습니다.```')
+				raise commands.CommandError('봇이 이미 음성채널에 접속해 있습니다.')
 
 	@commands.command(name=command[12][0], aliases=command[12][1:])   #도움말
 	async def menu_(self, ctx):
