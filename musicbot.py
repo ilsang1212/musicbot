@@ -85,6 +85,8 @@ class YTDLSource(discord.PCMVolumeTransformer):
 		'no_warnings': True,
 		'default_search': 'auto',
 		'source_address': '0.0.0.0',
+		'force-ipv4' : True,
+    		'-4': True
 	}
 
 	FFMPEG_OPTIONS = {
