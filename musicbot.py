@@ -488,7 +488,7 @@ class Music(commands.Cog):
 				await ctx.voice_state.songs.put(song)
 				await ctx.send('재생목록 추가 : {}'.format(str(source)))
 				
-	@client.command(name=command[13][0], aliases=command[13][1:])
+	@commands.command(name=command[13][0], aliases=command[13][1:])
 	async def race_(ctx):
 		msg = ctx.message.content[len(ctx.invoked_with)+1:]
 		race_info = []
