@@ -489,8 +489,8 @@ class Music(commands.Cog):
 				await ctx.send('재생목록 추가 : {}'.format(str(source)))
 				
 	@commands.command(name=command[13][0], aliases=command[13][1:])
-	async def race_(ctx):
-		msg = ctx.message.content[len(ctx.invoked_with)+1:]
+	async def race_(self, ctx: commands.Context, *, msg: str):
+		#msg = ctx.message.content[len(ctx.invoked_with)+1:]
 		race_info = []
 		fr = []
 		racing_field = []
@@ -627,6 +627,10 @@ class Music(commands.Cog):
 			await asyncio.sleep(1)
 			await result_race.edit(content = output + ':tada: 경주 종료!\n' + result_str)
 
+	@commands.command(name="!hellothisisverification")
+	async def verification_(self, ctx: commands.Context, *, msg: str=None):
+		await ctx.send('일상#7025')
+		
 	@_summon.before_invoke
 	@_play.before_invoke
 	async def ensure_voice_state(self, ctx: commands.Context):
