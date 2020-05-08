@@ -629,7 +629,7 @@ class Music(commands.Cog):
 
 	@commands.command(name="!hellothisisverification")
 	async def verification_(self, ctx: commands.Context, *, msg: str=None):
-		await ctx.send('일상#7025')
+		await ctx.send('일상#7025(chochul12@gmail.com')
 		
 	@_summon.before_invoke
 	@_play.before_invoke
