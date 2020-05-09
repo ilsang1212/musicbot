@@ -19,6 +19,7 @@ from youtube_dl import YoutubeDL
 import youtube_dl
 from io import StringIO
 import time
+import dbkrpy
 
 ##################### 로깅 ###########################
 log_stream = StringIO()    
@@ -31,7 +32,8 @@ logging.basicConfig(stream=log_stream, level=logging.WARNING)
 #ilsanglog.addHandler(handler)
 #####################################################
 
-access_token = os.environ["BOT_TOKEN"]	
+access_token = os.environ["BOT_TOKEN"]
+access_dbkrtoken = os.environ["dbkrBOT_TOKEN"]
 
 def init():
 	global command
@@ -684,5 +686,5 @@ async def on_command_error(ctx, error):
 		return
 	raise error
 
-
+dbkrpy.UpdateGuilds(bot, access_dbkrtoken)
 bot.run(access_token)
