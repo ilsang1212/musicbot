@@ -406,6 +406,9 @@ class Music(commands.Cog):
 		if not ctx.voice_state.is_playing:
 			return await ctx.send(':mute: 현재 재생중인 음악이 없습니다.')
 
+		await ctx.message.add_reaction('⏭')
+		ctx.voice_state.skip()
+		'''	
 		voter = ctx.message.author
 		if voter == ctx.voice_state.current.requester:
 			await ctx.message.add_reaction('⏭')
@@ -423,7 +426,7 @@ class Music(commands.Cog):
 
 		else:
 			await ctx.send('```이미 투표하셨습니다.```')
-
+		'''
 	@commands.command(name=command[6][0], aliases=command[6][1:])
 	async def _queue(self, ctx: commands.Context, *, page: int = 1):
 
