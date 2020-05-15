@@ -256,17 +256,19 @@ class VoiceState:
 		while True:
 			self.next.clear()
 
-			if not self.loop:
-				# Try to get the next song within 3 minutes.
-				# If no song will be added to the queue in time,
-				# the player will disconnect due to performance
-				# reasons.
-				try:
-					async with timeout(180):  # 3 minutes
-						self.current = await self.songs.get()
-				except asyncio.TimeoutError:
-					self.bot.loop.create_task(self.stop())
-					return
+			if self.loop and self.current is not None:
+				source1 = await YTDLSource.create_source(self._ctx, self.current.source.url, loop=self.bot.loop)
+				song1 = Song(source1)
+				await self.songs.put(song1)
+			else:
+				pass
+
+			try:
+				async with timeout(180):  # 3 minutes
+					self.current = await self.songs.get()
+			except asyncio.TimeoutError:
+				self.bot.loop.create_task(self.stop())
+				return
 
 			self.current.source.volume = self._volume
 			self.voice.play(self.current.source, after=self.play_next_song)
@@ -467,16 +469,19 @@ class Music(commands.Cog):
 		await result.add_reaction('✅')
 		
 
-	@commands.command(name='loopaassddaassdd')
+	@commands.command(name=command[14][0], aliases=command[14][1:])
 	async def _loop(self, ctx: commands.Context):
-		'''
 		if not ctx.voice_state.is_playing:
 			return await ctx.send(':mute: 현재 재생중인 음악이 없습니다.')
 
 		# Inverse boolean value to loop and unloop.
 		ctx.voice_state.loop = not ctx.voice_state.loop
-		await ctx.message.add_reaction('🔁')
-		'''
+		if ctx.voice_state.loop :
+			result = await ctx.send('반복재생이 설정되었습니다!')
+		else:
+			result = await ctx.send('반복재생이 취소되었습니다!')
+		await result.add_reaction('🔁')
+
 	@commands.command(name=command[2][0], aliases=command[2][1:])
 	async def _play(self, ctx: commands.Context, *, search: str):
 		if not ctx.voice_state.voice:
@@ -661,6 +666,7 @@ class Music(commands.Cog):
 		command_list += ','.join(command[9]) + '\n'     #!정지
 		command_list += ','.join(command[10]) + '\n'     #!삭제
 		command_list += ','.join(command[11]) + '\n'     #!섞기
+		command_list += ','.join(command[14]) + '\n'     #!
 		command_list += ','.join(command[13]) + ' 아이디1 아이디2 아이디3 ....\n'     #!경주
 		embed = discord.Embed(
 				title = "----- 명령어 -----",
