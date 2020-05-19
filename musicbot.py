@@ -20,6 +20,8 @@ import youtube_dl
 from io import StringIO
 import time
 import dbkrpy
+import urllib.request
+from gtts import gTTS
 
 ##################### 로깅 ###########################
 log_stream = StringIO()    
@@ -59,6 +61,33 @@ def init():
 
 init()
 
+#mp3 파일 생성함수(gTTS 이용, 남성목소리)
+async def MakeSound(saveSTR, filename):
+	'''
+	tts = gTTS(saveSTR, lang = 'ko')
+	tts.save('./' + filename + '.mp3')
+	'''
+	try:
+		encText = urllib.parse.quote(saveSTR)
+		urllib.request.urlretrieve("https://clova.ai/proxy/voice/api/tts?text=" + encText + "%0A&voicefont=1&format=wav",filename + '.wav')
+	except Exception as e:
+		print (e)
+		tts = gTTS(saveSTR, lang = 'ko')
+		tts.save('./' + filename + '.wav')
+		pass
+
+#mp3 파일 재생함수	
+async def PlaySound(voiceclient, filename):
+	source = discord.FFmpegPCMAudio(filename)
+	try:
+		voiceclient.play(source)
+	except discord.errors.ClientException:
+		while voiceclient.is_playing():
+			await asyncio.sleep(1)
+	while voiceclient.is_playing():
+		await asyncio.sleep(1)
+	voiceclient.stop()
+	source.cleanup()
 
 # Silence useless bug reports messages
 youtube_dl.utils.bug_reports_message = lambda: ''
@@ -674,6 +703,21 @@ class Music(commands.Cog):
 				color=0xff00ff
 				)
 		await ctx.send( embed=embed, tts=False)
+	################ 음성파일 생성 후 재생 ################ 			
+	@client.command(name="!말하자")
+	async def playText_(ctx):
+		msg = ctx.message.content[len(ctx.invoked_with)+1:]
+		sayMessage = msg
+		await MakeSound(ctx.message.author.display_name +'님이, ' + sayMessage, './say')
+		await ctx.send("```< " + ctx.author.display_name + " >님이 \"" + sayMessage + "\"```", tts=False)
+		
+		if not ctx.voice_state.voice:
+			await ctx.invoke(self._summon)
+			
+		if ctx.voice_state.is_playing:
+			ctx.voice_state.voice.stop()
+		
+		await PlaySound(ctx.voice_state.voice, './say.wav')
 
 bot = commands.Bot('', help_command = None, description='해성뮤직봇')
 bot.add_cog(Music(bot))
