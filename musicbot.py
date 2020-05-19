@@ -719,6 +719,10 @@ class Music(commands.Cog):
 		
 		await PlaySound(ctx.voice_state.voice, './say.wav')
 
+
+		await ctx.voice_state.stop()
+		del self.voice_states[ctx.guild.id]
+
 bot = commands.Bot('', help_command = None, description='해성뮤직봇')
 bot.add_cog(Music(bot))
 
