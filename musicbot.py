@@ -705,7 +705,7 @@ class Music(commands.Cog):
 		await ctx.send( embed=embed, tts=False)
 	################ 음성파일 생성 후 재생 ################ 			
 	@commands.command(name="!말하자")
-	async def playText_(ctx):
+	async def playText_(self, ctx):
 		msg = ctx.message.content[len(ctx.invoked_with)+1:]
 		sayMessage = msg
 		await MakeSound(ctx.message.author.display_name +'님이, ' + sayMessage, './say')
