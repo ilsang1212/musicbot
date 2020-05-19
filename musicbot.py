@@ -708,7 +708,7 @@ class Music(commands.Cog):
 	async def playText_(self, ctx):
 		msg = ctx.message.content[len(ctx.invoked_with)+1:]
 		sayMessage = msg
-		await MakeSound(ctx.message.author.display_name +'님이, ' + sayMessage, './say')
+		await MakeSound(ctx.message.author.display_name +'님이, ' + sayMessage, './say' + str(ctx.guild.id))
 		await ctx.send("```< " + ctx.author.display_name + " >님이 \"" + sayMessage + "\"```", tts=False)
 		
 		if not ctx.voice_state.voice:
@@ -717,7 +717,7 @@ class Music(commands.Cog):
 		if ctx.voice_state.is_playing:
 			ctx.voice_state.voice.stop()
 		
-		await PlaySound(ctx.voice_state.voice, './say.wav')
+		await PlaySound(ctx.voice_state.voice, './say' + str(ctx.guild.id) + '.wav')
 
 
 		await ctx.voice_state.stop()
@@ -735,7 +735,7 @@ async def on_ready():
 	
 	await bot.change_presence(status=discord.Status.dnd, activity=discord.Game(name=command[12][0], type=1), afk = False)
 
-@bot.event
+@bot.event 
 async def on_command_error(ctx, error):
 	if isinstance(error, CommandNotFound):
 		return
