@@ -63,7 +63,7 @@ init()
 
 #mp3 파일 생성함수(gTTS 이용, 남성목소리)
 async def MakeSound(saveSTR, filename):
-	'''
+	
 	tts = gTTS(saveSTR, lang = 'ko')
 	tts.save('./' + filename + '.mp3')
 	'''
@@ -75,7 +75,7 @@ async def MakeSound(saveSTR, filename):
 		tts = gTTS(saveSTR, lang = 'ko')
 		tts.save('./' + filename + '.wav')
 		pass
-
+	'''
 #mp3 파일 재생함수	
 async def PlaySound(voiceclient, filename):
 	source = discord.FFmpegPCMAudio(filename)
@@ -706,10 +706,10 @@ class Music(commands.Cog):
 	################ 음성파일 생성 후 재생 ################ 			
 	@commands.command(name="!말하자")
 	async def playText_(self, ctx):
-		msg = ctx.message.content[len(ctx.invoked_with)+1:]
-		sayMessage = msg
-		await MakeSound(ctx.message.author.display_name +'님이, ' + sayMessage, './say' + str(ctx.guild.id))
-		await ctx.send("```< " + ctx.author.display_name + " >님이 \"" + sayMessage + "\"```", tts=False)
+		#msg = ctx.message.content[len(ctx.invoked_with)+1:]
+		#sayMessage = msg
+		await MakeSound('뮤직봇이 마이 아파요. 잠시만 기다려주세요.', './say' + str(ctx.guild.id))
+		await ctx.send("뮤직봇이 마이 아파요. 잠시만 기다려주세요.", tts=False)
 		
 		if not ctx.voice_state.voice:
 			await ctx.invoke(self._summon)
