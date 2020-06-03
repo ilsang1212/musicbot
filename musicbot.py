@@ -709,7 +709,7 @@ class Music(commands.Cog):
 		#msg = ctx.message.content[len(ctx.invoked_with)+1:]
 		#sayMessage = msg
 		await MakeSound('뮤직봇이 마이 아파요. 잠시 후 사용해주세요.', './say' + str(ctx.guild.id))
-		await ctx.send("뮤직봇이 마이 아파요. 잠시 후 사용해주세요.", tts=False)
+		await ctx.send("```뮤직봇이 마이 아파요. 잠시 후 사용해주세요.```", tts=False)
 		
 		if not ctx.voice_state.voice:
 			await ctx.invoke(self._summon)
