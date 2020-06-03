@@ -65,7 +65,7 @@ init()
 async def MakeSound(saveSTR, filename):
 	
 	tts = gTTS(saveSTR, lang = 'ko')
-	tts.save('./' + filename + '.mp3')
+	tts.save('./' + filename + '.wav')
 	'''
 	try:
 		encText = urllib.parse.quote(saveSTR)
@@ -704,7 +704,7 @@ class Music(commands.Cog):
 				)
 		await ctx.send( embed=embed, tts=False)
 	################ 음성파일 생성 후 재생 ################ 			
-	@commands.command(name="!말하자")
+	@commands.command(name="!인중")
 	async def playText_(self, ctx):
 		#msg = ctx.message.content[len(ctx.invoked_with)+1:]
 		#sayMessage = msg
