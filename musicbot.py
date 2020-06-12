@@ -39,6 +39,8 @@ access_dbkrtoken = os.environ["dbkrBOT_TOKEN"]
 
 def init():
 	global command
+	global default_prefix
+	global server_prefix
 
 	command = []
 	fc = []
@@ -56,6 +58,9 @@ def init():
 	del command[0]
 
 	command_inidata.close()
+
+	default_prefix = "!"
+	server_prefix = {}
 
 	#print (command)
 
@@ -361,7 +366,6 @@ class Music(commands.Cog):
 		if ctx.voice_state.voice:
 			await ctx.voice_state.voice.move_to(destination)
 			return
-
 		ctx.voice_state.voice = await destination.connect()
 	'''
 	async def cleanup(self, ctx: commands.Context):
@@ -444,17 +448,14 @@ class Music(commands.Cog):
 		if voter == ctx.voice_state.current.requester:
 			await ctx.message.add_reaction('⏭')
 			ctx.voice_state.skip()
-
 		elif voter.id not in ctx.voice_state.skip_votes:
 			ctx.voice_state.skip_votes.add(voter.id)
 			total_votes = len(ctx.voice_state.skip_votes)
-
 			if total_votes >= 3:
 				await ctx.message.add_reaction('⏭')
 				ctx.voice_state.skip()
 			else:
 				await ctx.send('Skip vote added, currently at **{}/3**'.format(total_votes))
-
 		else:
 			await ctx.send('```이미 투표하셨습니다.```')
 		'''
@@ -546,16 +547,13 @@ class Music(commands.Cog):
 
 		'''
 		racing_unit = []
-
 		emoji = discord.Emoji
 		emoji = ctx.message.guild.emojis
-
 		for j in range(len(tmp_racing_unit)):
 			racing_unit.append(':' + tmp_racing_unit[j] + ':')
 			for i in range(len(emoji)):
 				if emoji[i].name == tmp_racing_unit[j].strip(":"):
 					racing_unit[j] = '<:' + tmp_racing_unit[j] + ':' + str(emoji[i].id) + '>'
-
 		random.shuffle(racing_unit)
 		'''
 		field_size = 60
@@ -669,6 +667,11 @@ class Music(commands.Cog):
 	@commands.command(name="!hellothisisverification")
 	async def verification_(self, ctx: commands.Context, *, msg: str=None):
 		await ctx.send('일상#7025(chochul12@gmail.com')
+
+	@commands.command(name=command[15][0], aliases=command[15][1:])
+	async def change_prefix_(self, ctx: commands.Context, *, msg: str=None):
+		server_prefix[ctx.guild.id] = msg.split()
+		await ctx.send(f"```명령어 [{msg}]로 변경완료!```")
 		
 	@_summon.before_invoke
 	@_play.before_invoke
@@ -682,30 +685,37 @@ class Music(commands.Cog):
 
 	@commands.command(name=command[12][0], aliases=command[12][1:])   #도움말
 	async def menu_(self, ctx):
-		command_list = ''
-		command_list += '!인중 : 봇상태가 안좋을 때 쓰세요!'     #!
-		command_list += ','.join(command[0]) + '\n'     #!들어가자
-		command_list += ','.join(command[1]) + '\n'     #!나가자
-		command_list += ','.join(command[2]) + ' [검색어] or [url]\n'     #!재생
-		command_list += ','.join(command[3]) + '\n'     #!일시정지
-		command_list += ','.join(command[4]) + '\n'     #!다시재생
-		command_list += ','.join(command[5]) + '\n'     #!스킵
-		command_list += ','.join(command[6]) + ' 혹은 [명령어] + [숫자]\n'     #!목록
-		command_list += ','.join(command[7]) + '\n'     #!현재재생
-		command_list += ','.join(command[8]) + ' [숫자 1~100]\n'     #!볼륨
-		command_list += ','.join(command[9]) + '\n'     #!정지
-		command_list += ','.join(command[10]) + '\n'     #!삭제
-		command_list += ','.join(command[11]) + '\n'     #!섞기
-		command_list += ','.join(command[14]) + '\n'     #!
-		command_list += ','.join(command[13]) + ' 아이디1 아이디2 아이디3 ....\n'     #!경주
+		if ctx.guild.id in server_prefix:
+			curr_prefix = ', '.join(server_prefix[ctx.guild.id])
+		else:
+			curr_prefix = default_prefix
+		command_list = '```현재 설정된 접두어 : ' + curr_prefix + '\n```'
+		command_list += '```'
+		command_list += '접두어 + ' + '인중 : 봇상태가 안좋을 때 쓰세요!\n'     #!
+		command_list += '접두어 + ' + ','.join(command[0]) + '\n'     #!들어가자
+		command_list += '접두어 + ' + ','.join(command[1]) + '\n'     #!나가자
+		command_list += '접두어 + ' + ','.join(command[2]) + ' [검색어] or [url]\n'     #!재생
+		command_list += '접두어 + ' + ','.join(command[3]) + '\n'     #!일시정지
+		command_list += '접두어 + ' + ','.join(command[4]) + '\n'     #!다시재생
+		command_list += '접두어 + ' + ','.join(command[5]) + '\n'     #!스킵
+		command_list += '접두어 + ' + ','.join(command[6]) + ' 혹은 [명령어] + [숫자]\n'     #!목록
+		command_list += '접두어 + ' + ','.join(command[7]) + '\n'     #!현재재생
+		command_list += '접두어 + ' + ','.join(command[8]) + ' [숫자 1~100]\n'     #!볼륨
+		command_list += '접두어 + ' + ','.join(command[9]) + '\n'     #!정지
+		command_list += '접두어 + ' + ','.join(command[10]) + '\n'     #!삭제
+		command_list += '접두어 + ' + ','.join(command[11]) + '\n'     #!섞기
+		command_list += '접두어 + ' + ','.join(command[14]) + '\n'     #!
+		command_list += '접두어 + ' + ','.join(command[15]) + ' + 원하는 접두어(! @ # $ 빈칸으로 여러개 가능)\n'     #접두어
+		command_list += '접두어 + ' + ','.join(command[13]) + ' 아이디1 아이디2 아이디3 ....\n```'     #!경주
+		command_list += "```기본 접두어 : !\n※ 개인설정한 접두어는 봇 재시작시 초기화됩니다.```"     #!경주
 		embed = discord.Embed(
 				title = "----- 명령어 -----",
-				description= '```' + command_list + '```',
+				description = command_list,
 				color=0xff00ff
 				)
 		await ctx.send( embed=embed, tts=False)
 	################ 음성파일 생성 후 재생 ################ 			
-	@commands.command(name="!인중")
+	@commands.command(name="인중")
 	async def playText_(self, ctx):
 		#msg = ctx.message.content[len(ctx.invoked_with)+1:]
 		#sayMessage = msg
@@ -720,11 +730,19 @@ class Music(commands.Cog):
 		
 		await PlaySound(ctx.voice_state.voice, './say' + str(ctx.guild.id) + '.wav')
 
-
 		await ctx.voice_state.stop()
 		del self.voice_states[ctx.guild.id]
 
-bot = commands.Bot('', help_command = None, description='해성뮤직봇')
+def get_prefix(bot, msg):
+	if msg.author.bot: #만약 메시지를 보낸사람이 봇일 경우에는
+		return None #동작하지 않고 무시합니다.
+	
+	if msg.guild.id in server_prefix:
+		return commands.when_mentioned_or(*server_prefix[msg.guild.id])(bot, msg)
+
+	return commands.when_mentioned_or(*default_prefix)(bot, msg)
+
+bot = commands.Bot(command_prefix=get_prefix, help_command = None, description='해성뮤직봇')
 bot.add_cog(Music(bot))
 
 @bot.event
