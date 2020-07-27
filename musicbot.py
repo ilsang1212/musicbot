@@ -682,6 +682,14 @@ class Music(commands.Cog):
 		if ctx.voice_client:
 			if ctx.voice_client.channel != ctx.author.voice.channel:
 				raise commands.CommandError('봇이 이미 음성채널에 접속해 있습니다.')
+				
+	@commands.command(name="!채팅청소")
+	async def clear_channel_(self, ctx: commands.Context, *, msg: int = 1):
+		try:
+			msg = int(msg)
+		except:
+			await ctx.send(f"```지우고 싶은 줄수는 [숫자]로 입력해주세요!```")
+		await ctx.channel.purge(limit = msg)
 
 	@commands.command(name=command[12][0], aliases=command[12][1:])   #도움말
 	async def menu_(self, ctx):
