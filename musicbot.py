@@ -161,7 +161,7 @@ class YTDLSource(discord.PCMVolumeTransformer):
 	async def create_source(cls, ctx: commands.Context, search: str, *, loop: asyncio.BaseEventLoop = None):
 		loop = loop or asyncio.get_event_loop()
 
-		partial = functools.partial(cls.ytdl.extract_info, search, download=False, process=False)
+		partial = functools.partial(cls.ytdl.extract_info, f"ytsearch5:{search}", download=False, process=False)
 		data = await loop.run_in_executor(None, partial)
 
 		if data is None:
