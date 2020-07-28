@@ -167,19 +167,42 @@ class YTDLSource(discord.PCMVolumeTransformer):
 		if data is None:
 			raise YTDLError('Couldn\'t find anything that matches `{}`'.format(search))
 
-		if 'entries' not in data:
-			process_info = data
+		emoji_list : list = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣"]
+		song_list_str : str = ""
+		cnt : int = 0
+		song_index : int = 0
+
+		for data_info in data["entries"]:
+			cnt += 1
+			song_list_str += f"`{cnt}.` [**{data_info['title']}**](https://www.youtube.com/watch?v={data_info['url']})\n"
+
+		embed = discord.Embed(description= song_list_str)
+		embed.set_footer(text=f"10초 안에 미선택시 1번 노래가 선택됩니다.")
+
+		song_list_message = await ctx.send(embed = embed)
+
+		for emoji in emoji_list:
+			await song_list_message.add_reaction(emoji)
+
+		def reaction_check(reaction, user):
+			return (reaction.message.id == song_list_message.id) and (user.id == ctx.author.id) and (str(reaction) in emoji_list)
+		try:
+			reaction, user = await bot.wait_for('reaction_add', check = reaction_check, timeout = 5)
+		except asyncio.TimeoutError:
+			reaction = "1️⃣"
+		
+		if str(reaction) == "1️⃣":
+			song_index = 0
+		elif str(reaction) == "2️⃣":
+			song_index = 1
+		elif str(reaction) == "3️⃣":
+			song_index = 2
+		elif str(reaction) == "4️⃣":
+			song_index = 3
 		else:
-			process_info = None
-			for entry in data['entries']:
-				if entry:
-					process_info = entry
-					break
+			song_index = 4
 
-			if process_info is None:
-				raise YTDLError('Couldn\'t find anything that matches `{}`'.format(search))
-
-		webpage_url = process_info['webpage_url']
+		webpage_url = f"https://www.youtube.com/watch?v={data['entries'][song_index]['url']}"
 		partial = functools.partial(cls.ytdl.extract_info, webpage_url, download=False)
 		processed_info = await loop.run_in_executor(None, partial)
 
