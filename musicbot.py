@@ -187,9 +187,14 @@ class YTDLSource(discord.PCMVolumeTransformer):
 		def reaction_check(reaction, user):
 			return (reaction.message.id == song_list_message.id) and (user.id == ctx.author.id) and (str(reaction) in emoji_list)
 		try:
-			reaction, user = await bot.wait_for('reaction_add', check = reaction_check, timeout = 5)
+			reaction, user = await bot.wait_for('reaction_add', check = reaction_check, timeout = 10)
 		except asyncio.TimeoutError:
 			reaction = "1️⃣"
+			
+		for emoji in emoji_list:
+			await song_list_message.remove_reaction(emoji, bot.user)
+
+		await song_list_message.delete(delay = 10)
 		
 		if str(reaction) == "1️⃣":
 			song_index = 0
