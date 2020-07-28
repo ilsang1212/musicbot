@@ -161,55 +161,60 @@ class YTDLSource(discord.PCMVolumeTransformer):
 	async def create_source(cls, ctx: commands.Context, search: str, *, loop: asyncio.BaseEventLoop = None):
 		loop = loop or asyncio.get_event_loop()
 
-		partial = functools.partial(cls.ytdl.extract_info, f"ytsearch5:{search}", download=False, process=False)
-		data = await loop.run_in_executor(None, partial)
+		if "http" not in search:
+			partial = functools.partial(cls.ytdl.extract_info, f"ytsearch5:{search}", download=False, process=False)
+			data = await loop.run_in_executor(None, partial)
 
-		if data is None:
-			raise YTDLError('Couldn\'t find anything that matches `{}`'.format(search))
+			if data is None:
+				raise YTDLError('Couldn\'t find anything that matches `{}`'.format(search))
 
-		emoji_list : list = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣"]
-		song_list_str : str = ""
-		cnt : int = 0
-		song_index : int = 0
+			emoji_list : list = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣"]
+			song_list_str : str = ""
+			cnt : int = 0
+			song_index : int = 0
 
-		for data_info in data["entries"]:
-			cnt += 1
-			if 'title' not in data_info:
-				data_info['title'] = f"{search} - 제목 정보 없음"
-			song_list_str += f"`{cnt}.` [**{data_info['title']}**](https://www.youtube.com/watch?v={data_info['url']})\n"
+			for data_info in data["entries"]:
+				cnt += 1
+				if 'title' not in data_info:
+					data_info['title'] = f"{search} - 제목 정보 없음"
+				song_list_str += f"`{cnt}.` [**{data_info['title']}**](https://www.youtube.com/watch?v={data_info['url']})\n"
 
-		embed = discord.Embed(description= song_list_str)
-		embed.set_footer(text=f"10초 안에 미선택시 1번 노래가 선택됩니다.")
+			embed = discord.Embed(description= song_list_str)
+			embed.set_footer(text=f"10초 안에 미선택시 1번 노래가 선택됩니다.")
 
-		song_list_message = await ctx.send(embed = embed)
+			song_list_message = await ctx.send(embed = embed)
 
-		for emoji in emoji_list:
-			await song_list_message.add_reaction(emoji)
+			for emoji in emoji_list:
+				await song_list_message.add_reaction(emoji)
 
-		def reaction_check(reaction, user):
-			return (reaction.message.id == song_list_message.id) and (user.id == ctx.author.id) and (str(reaction) in emoji_list)
-		try:
-			reaction, user = await bot.wait_for('reaction_add', check = reaction_check, timeout = 10)
-		except asyncio.TimeoutError:
-			reaction = "1️⃣"
-			
-		for emoji in emoji_list:
-			await song_list_message.remove_reaction(emoji, bot.user)
+			def reaction_check(reaction, user):
+				return (reaction.message.id == song_list_message.id) and (user.id == ctx.author.id) and (str(reaction) in emoji_list)
+			try:
+				reaction, user = await bot.wait_for('reaction_add', check = reaction_check, timeout = 10)
+			except asyncio.TimeoutError:
+				reaction = "1️⃣"
 
-		await song_list_message.delete(delay = 10)
-		
-		if str(reaction) == "1️⃣":
-			song_index = 0
-		elif str(reaction) == "2️⃣":
-			song_index = 1
-		elif str(reaction) == "3️⃣":
-			song_index = 2
-		elif str(reaction) == "4️⃣":
-			song_index = 3
+			for emoji in emoji_list:
+				await song_list_message.remove_reaction(emoji, bot.user)
+
+			await song_list_message.delete(delay = 10)
+
+			if str(reaction) == "1️⃣":
+				song_index = 0
+			elif str(reaction) == "2️⃣":
+				song_index = 1
+			elif str(reaction) == "3️⃣":
+				song_index = 2
+			elif str(reaction) == "4️⃣":
+				song_index = 3
+			else:
+				song_index = 4
+
+			result_url = f"https://www.youtube.com/watch?v={data['entries'][song_index]['url']}"
 		else:
-			song_index = 4
+			result_url = search
 
-		webpage_url = f"https://www.youtube.com/watch?v={data['entries'][song_index]['url']}"
+		webpage_url = result_url
 		partial = functools.partial(cls.ytdl.extract_info, webpage_url, download=False)
 		processed_info = await loop.run_in_executor(None, partial)
 
