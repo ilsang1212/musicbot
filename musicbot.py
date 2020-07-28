@@ -511,7 +511,10 @@ class Music(commands.Cog):
 		for i, song in enumerate(ctx.voice_state.songs[start:end], start=start):
 			queue += '`{0}.` [**{1.source.title}**]({1.source.url})\n'.format(i + 1, song)
 
-		embed = discord.Embed(title = 'Now playing', description='**```fix\n{0.source.title}\n```**'.format(ctx.voice_state.current))
+		if ctx.voice_state.loop:
+			embed = discord.Embed(title = '🔁  Now playing', description='**```fix\n{0.source.title}\n```**'.format(ctx.voice_state.current))
+		else:
+			embed = discord.Embed(title = 'Now playing', description='**```fix\n{0.source.title}\n```**'.format(ctx.voice_state.current))
 		embed.add_field(name ='\u200B\n**{} tracks:**\n'.format(len(ctx.voice_state.songs)), value = f"\u200B\n{queue}")
 		embed.set_thumbnail(url=ctx.voice_state.current.source.thumbnail)
 		embed.set_footer(text='Viewing page {}/{}'.format(page, pages))
