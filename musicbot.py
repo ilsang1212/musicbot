@@ -247,7 +247,7 @@ class Song:
 
 	def create_embed(self):
 		embed = (discord.Embed(title='Now playing',
-							description='```css\n{0.source.title}\n```'.format(self),
+							description='**```fix\n{0.source.title}\n```**'.format(self),
 							color=discord.Color.blurple())
 				.add_field(name='Duration', value=self.source.duration)
 				.add_field(name='Requested by', value=self.requester.mention)
@@ -511,8 +511,10 @@ class Music(commands.Cog):
 		for i, song in enumerate(ctx.voice_state.songs[start:end], start=start):
 			queue += '`{0}.` [**{1.source.title}**]({1.source.url})\n'.format(i + 1, song)
 
-		embed = (discord.Embed(description='**{} tracks:**\n\n{}'.format(len(ctx.voice_state.songs), queue))
-				.set_footer(text='Viewing page {}/{}'.format(page, pages)))
+		embed = discord.Embed(title = 'Now playing', description='**```fix\n{0.source.title}\n```**'.format(ctx.voice_state.current))
+		embed.add_field(name ='\u200B\n**{} tracks:**\n'.format(len(ctx.voice_state.songs)), value = f"\u200B\n{queue}")
+		embed.set_thumbnail(url=ctx.voice_state.current.source.thumbnail)
+		embed.set_footer(text='Viewing page {}/{}'.format(page, pages))
 		await ctx.send(embed=embed)
 
 	@commands.command(name=command[11][0], aliases=command[11][1:])
