@@ -174,6 +174,8 @@ class YTDLSource(discord.PCMVolumeTransformer):
 
 		for data_info in data["entries"]:
 			cnt += 1
+			if 'title' not in data_info:
+				data_info['title'] = f"{search} - 제목 정보 없음"
 			song_list_str += f"`{cnt}.` [**{data_info['title']}**](https://www.youtube.com/watch?v={data_info['url']})\n"
 
 		embed = discord.Embed(description= song_list_str)
