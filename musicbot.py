@@ -782,7 +782,7 @@ class Music(commands.Cog):
 			return
 		
 		if not args:
-			return await ctx.send(f"**!페이백/!ㅍㅇ/!페 거래소가격] [실거래가] (거래소세금)** 양식으로 입력 해주세요\n※ 거래소세금은 미입력시 5%입니다.")
+			return await ctx.send(f"**!페이백/!ㅍㅇ/!페 [거래소가격] [실거래가] (거래소세금)** 양식으로 입력 해주세요\n※ 거래소세금은 미입력시 5%입니다.")
 		
 		input_money_data : list = args.split()
 		len_input_money_data = len(input_money_data)
