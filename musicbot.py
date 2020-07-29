@@ -180,7 +180,7 @@ class YTDLSource(discord.PCMVolumeTransformer):
 				song_list_str += f"`{cnt}.` [**{data_info['title']}**](https://www.youtube.com/watch?v={data_info['url']})\n"
 
 			embed = discord.Embed(description= song_list_str)
-			embed.set_footer(text=f"10초 안에 미선택시 미선택시 취소됩니다.")
+			embed.set_footer(text=f"10초 안에 미선택시 취소됩니다.")
 
 			song_list_message = await ctx.send(embed = embed)
 
