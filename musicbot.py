@@ -279,6 +279,14 @@ class SongQueue(asyncio.Queue):
 	def shuffle(self):
 		random.shuffle(self._queue)
 
+	def select(self, index : int, loop : bool = False):
+		for i in range(index-1):
+			if not loop:
+				del self._queue[0]
+			else:
+				self._queue.append(self._queue[0])
+				del self._queue[0]
+
 	def remove(self, index: int):
 		del self._queue[index]
 
@@ -475,28 +483,17 @@ class Music(commands.Cog):
 			await ctx.message.add_reaction('⏹')
 
 	@commands.command(name=command[5][0], aliases=command[5][1:])
-	async def _skip(self, ctx: commands.Context):
+	async def _skip(self, ctx: commands.Context, *, args: int = 1):
 		if not ctx.voice_state.is_playing:
 			return await ctx.send(':mute: 현재 재생중인 음악이 없습니다.')
 
 		await ctx.message.add_reaction('⏭')
+
+		if args != 1:
+			ctx.voice_state.songs.select(args, ctx.voice_state.loop)
+
 		ctx.voice_state.skip()
-		'''	
-		voter = ctx.message.author
-		if voter == ctx.voice_state.current.requester:
-			await ctx.message.add_reaction('⏭')
-			ctx.voice_state.skip()
-		elif voter.id not in ctx.voice_state.skip_votes:
-			ctx.voice_state.skip_votes.add(voter.id)
-			total_votes = len(ctx.voice_state.skip_votes)
-			if total_votes >= 3:
-				await ctx.message.add_reaction('⏭')
-				ctx.voice_state.skip()
-			else:
-				await ctx.send('Skip vote added, currently at **{}/3**'.format(total_votes))
-		else:
-			await ctx.send('```이미 투표하셨습니다.```')
-		'''
+
 	@commands.command(name=command[6][0], aliases=command[6][1:])
 	async def _queue(self, ctx: commands.Context, *, page: int = 1):
 
