@@ -611,7 +611,7 @@ class Music(commands.Cog):
 		command_list += '접두어 + ' + ','.join(command[2]) + ' [검색어] or [url]\n'     #!재생
 		command_list += '접두어 + ' + ','.join(command[3]) + '\n'     #!일시정지
 		command_list += '접두어 + ' + ','.join(command[4]) + '\n'     #!다시재생
-		command_list += '접두어 + ' + ','.join(command[5]) + '\n'     #!스킵
+		command_list += '접두어 + ' + ','.join(command[5]) + ' (숫자)\n'     #!스킵
 		command_list += '접두어 + ' + ','.join(command[6]) + ' 혹은 [명령어] + [숫자]\n'     #!목록
 		command_list += '접두어 + ' + ','.join(command[7]) + '\n'     #!현재재생
 		command_list += '접두어 + ' + ','.join(command[8]) + ' [숫자 1~100]\n'     #!볼륨
