@@ -735,9 +735,6 @@ class Music(commands.Cog):
 	################ 수수료 계산기 ################ 
 	@commands.command(name="!수수료", aliases=["!ㅅ"])
 	async def tax_check(self, ctx, *, args : str = None):
-		if ctx.message.channel.id != int(737661590417178626):
-			return
-
 		if not args:
 			return await ctx.send(f"**!수수료/!ㅅ [판매금액] (거래소세금)** 양식으로 입력 해주세요\n※ 거래소세금은 미입력시 5%입니다.")
 		
@@ -774,9 +771,6 @@ class Music(commands.Cog):
 	################ 페이백 계산기 ################ 
 	@commands.command(name="!페이백", aliases=["!ㅍㅇ", "!페"])
 	async def payback_check(self, ctx, *, args : str = None):
-		if ctx.message.channel.id != int(737661590417178626):
-			return
-
 		if not args:
 			return await ctx.send(f"**!페이백/!ㅍㅇ/!페 거래소가격] [실거래가] (거래소세금)** 양식으로 입력 해주세요\n※ 거래소세금은 미입력시 5%입니다.")
 		
