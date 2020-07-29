@@ -168,7 +168,7 @@ class YTDLSource(discord.PCMVolumeTransformer):
 			if data is None:
 				raise YTDLError('Couldn\'t find anything that matches `{}`'.format(search))
 
-			emoji_list : list = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣"]
+			emoji_list : list = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "🚫"]
 			song_list_str : str = ""
 			cnt : int = 0
 			song_index : int = 0
@@ -180,7 +180,7 @@ class YTDLSource(discord.PCMVolumeTransformer):
 				song_list_str += f"`{cnt}.` [**{data_info['title']}**](https://www.youtube.com/watch?v={data_info['url']})\n"
 
 			embed = discord.Embed(description= song_list_str)
-			embed.set_footer(text=f"10초 안에 미선택시 1번 노래가 선택됩니다.")
+			embed.set_footer(text=f"10초 안에 미선택시 미선택시 취소됩니다.")
 
 			song_list_message = await ctx.send(embed = embed)
 
@@ -192,7 +192,7 @@ class YTDLSource(discord.PCMVolumeTransformer):
 			try:
 				reaction, user = await bot.wait_for('reaction_add', check = reaction_check, timeout = 10)
 			except asyncio.TimeoutError:
-				reaction = "1️⃣"
+				reaction = "🚫"
 
 			for emoji in emoji_list:
 				await song_list_message.remove_reaction(emoji, bot.user)
@@ -207,8 +207,10 @@ class YTDLSource(discord.PCMVolumeTransformer):
 				song_index = 2
 			elif str(reaction) == "4️⃣":
 				song_index = 3
-			else:
+			elif str(reaction) == "5️⃣":
 				song_index = 4
+			else:
+				return False
 
 			result_url = f"https://www.youtube.com/watch?v={data['entries'][song_index]['url']}"
 		else:
@@ -561,6 +563,8 @@ class Music(commands.Cog):
 		async with ctx.typing():
 			try:
 				source = await YTDLSource.create_source(ctx, search, loop=self.bot.loop)
+				if not source:
+					return await ctx.send(f"노래 재생/예약이 취소 되었습니다.")
 			except YTDLError as e:
 				await ctx.send('에러가 발생했습니다 : {}'.format(str(e)))
 			else:
