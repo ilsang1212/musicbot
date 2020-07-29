@@ -805,7 +805,7 @@ async def on_ready():
 	print(bot.user.id)
 	print("===========")
 	
-	await bot.change_presence(status=discord.Status.dnd, activity=discord.Game(name=command[12][0], type=1), afk = False)
+	await bot.change_presence(status=discord.Status.dnd, activity=discord.Game(f"{server_prefix[ctx.guild.id]}{name=command[12][0]}, type=1), afk = False)
 
 @bot.event 
 async def on_command_error(ctx, error):
