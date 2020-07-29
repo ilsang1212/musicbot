@@ -572,142 +572,6 @@ class Music(commands.Cog):
 
 				await ctx.voice_state.songs.put(song)
 				await ctx.send('재생목록 추가 : {}'.format(str(source)))
-				
-	@commands.command(name=command[13][0], aliases=command[13][1:])
-	async def race_(self, ctx: commands.Context, *, msg: str):
-		#msg = ctx.message.content[len(ctx.invoked_with)+1:]
-		race_info = []
-		fr = []
-		racing_field = []
-		str_racing_field = []
-		cur_pos = []
-		race_val = []
-		random_pos = []
-		racing_result = []
-		output = ':camera: :camera: :camera: 신나는 레이싱! :camera: :camera: :camera:\n'
-		#racing_unit = [':giraffe:', ':elephant:', ':tiger2:', ':hippopotamus:', ':crocodile:',':leopard:',':ox:', ':sheep:', ':pig2:',':dromedary_camel:',':dragon:',':rabbit2:'] #동물스킨
-		racing_unit = [':red_car:', ':taxi:', ':bus:', ':trolleybus:', ':race_car:', ':police_car:', ':ambulance:', ':fire_engine:', ':minibus:', ':truck:', ':articulated_lorry:', ':tractor:', ':scooter:', ':manual_wheelchair:', ':motor_scooter:', ':auto_rickshaw:', ':blue_car:', ':bike:', ':helicopter:', ':steam_locomotive:']  #탈것스킨
-		random.shuffle(racing_unit) 
-		racing_member = msg.split(" ")
-
-		'''
-		racing_unit = []
-		emoji = discord.Emoji
-		emoji = ctx.message.guild.emojis
-		for j in range(len(tmp_racing_unit)):
-			racing_unit.append(':' + tmp_racing_unit[j] + ':')
-			for i in range(len(emoji)):
-				if emoji[i].name == tmp_racing_unit[j].strip(":"):
-					racing_unit[j] = '<:' + tmp_racing_unit[j] + ':' + str(emoji[i].id) + '>'
-		random.shuffle(racing_unit)
-		'''
-		field_size = 60
-		tmp_race_tab = 35 - len(racing_member)
-		if len(racing_member) <= 1:
-			await ctx.send('레이스 인원이 2명보다 작습니다.')
-			return
-		elif len(racing_member) >= 13:
-			await ctx.send('레이스 인원이 12명 초과입니다.')
-			return
-		else :
-			race_val = random.sample(range(tmp_race_tab, tmp_race_tab+len(racing_member)), len(racing_member))
-			random.shuffle(race_val)
-			for i in range(len(racing_member)):
-				fr.append(racing_member[i])
-				fr.append(racing_unit[i])
-				fr.append(race_val[i])
-				race_info.append(fr)
-				fr = []
-				for i in range(field_size):
-					fr.append(" ")
-				racing_field.append(fr)
-				fr = []
-
-			for i in range(len(racing_member)):
-				racing_field[i][0] = "|"
-				racing_field[i][field_size-2] = race_info[i][1]
-				if len(race_info[i][0]) > 5:
-					racing_field[i][field_size-1] = "| " + race_info[i][0][:5] + '..'
-				else:
-					racing_field[i][field_size-1] = "| " + race_info[i][0]
-				str_racing_field.append("".join(racing_field[i]))
-				cur_pos.append(field_size-2)
-
-			for i in range(len(racing_member)):
-				output +=  str_racing_field[i] + '\n'
-
-			result_race = await ctx.send(output + ':traffic_light: 3초 후 경주가 시작됩니다!')
-			await asyncio.sleep(1)
-			await result_race.edit(content = output + ':traffic_light: 2초 후 경주가 시작됩니다!')
-			await asyncio.sleep(1)
-			await result_race.edit(content = output + ':traffic_light: 1초 후 경주가 시작됩니다!')
-			await asyncio.sleep(1)
-			await result_race.edit(content = output + ':checkered_flag:  경주 시작!')								
-
-			for i in range(len(racing_member)):
-				test = random.sample(range(2,field_size-2), race_info[i][2])
-				while len(test) != tmp_race_tab + len(racing_member)-1 :
-					test.append(1)
-				test.append(1)
-				test.sort(reverse=True)
-				random_pos.append(test)
-
-			for j in range(len(random_pos[0])):
-				if j%2 == 0:
-					output =  ':camera: :camera_with_flash: :camera: 신나는 레이싱! :camera_with_flash: :camera: :camera_with_flash:\n'
-				else :
-					output =  ':camera_with_flash: :camera: :camera_with_flash: 신나는 레이싱! :camera: :camera_with_flash: :camera:\n'
-				str_racing_field = []
-				for i in range(len(racing_member)):
-					temp_pos = cur_pos[i]
-					racing_field[i][random_pos[i][j]], racing_field[i][temp_pos] = racing_field[i][temp_pos], racing_field[i][random_pos[i][j]]
-					cur_pos[i] = random_pos[i][j]
-					str_racing_field.append("".join(racing_field[i]))
-
-				await asyncio.sleep(1) 
-
-				for i in range(len(racing_member)):
-					output +=  str_racing_field[i] + '\n'
-
-				await result_race.edit(content = output + ':checkered_flag:  경주 시작!')
-
-			for i in range(len(racing_field)):
-				fr.append(race_info[i][0])
-				fr.append((race_info[i][2]) - tmp_race_tab + 1)
-				racing_result.append(fr)
-				fr = []
-
-			result = sorted(racing_result, key=lambda x: x[1])
-
-			result_str = ''
-			for i in range(len(result)):
-				if result[i][1] == 1:
-					result[i][1] = ':first_place:'
-				elif result[i][1] == 2:
-					result[i][1] = ':second_place:'
-				elif result[i][1] == 3:
-					result[i][1] = ':third_place:'
-				elif result[i][1] == 4:
-					result[i][1] = ':four:'
-				elif result[i][1] == 5:
-					result[i][1] = ':five:'
-				elif result[i][1] == 6:
-					result[i][1] = ':six:'
-				elif result[i][1] == 7:
-					result[i][1] = ':seven:'
-				elif result[i][1] == 8:
-					result[i][1] = ':eight:'
-				elif result[i][1] == 9:
-					result[i][1] = ':nine:'
-				elif result[i][1] == 10:
-					result[i][1] = ':keycap_ten:'
-				else:
-					result[i][1] = ':x:'
-				result_str += result[i][1] + "  " + result[i][0] + "  "
-
-			#print(result)
-			await asyncio.sleep(1)
-			await result_race.edit(content = output + ':tada: 경주 종료!\n' + result_str)
 
 	@commands.command(name="!hellothisisverification")
 	async def verification_(self, ctx: commands.Context, *, msg: str=None):
@@ -728,7 +592,7 @@ class Music(commands.Cog):
 			if ctx.voice_client.channel != ctx.author.voice.channel:
 				raise commands.CommandError('봇이 이미 음성채널에 접속해 있습니다.')
 				
-	@commands.command(name="채팅청소")
+	@commands.command(name=command[13][0], aliases=command[13][1:])
 	async def clear_channel_(self, ctx: commands.Context, *, msg: int = 1):
 		try:
 			msg = int(msg)
@@ -759,7 +623,7 @@ class Music(commands.Cog):
 		command_list += '접두어 + ' + ','.join(command[11]) + '\n'     #!섞기
 		command_list += '접두어 + ' + ','.join(command[14]) + '\n'     #!
 		command_list += '접두어 + ' + ','.join(command[15]) + ' + 원하는 접두어(! @ # $ 빈칸으로 여러개 가능)\n'     #접두어
-		command_list += '접두어 + ' + ','.join(command[13]) + ' 아이디1 아이디2 아이디3 ....\n```'     #!경주
+		command_list += '접두어 + ' + ','.join(command[13]) + ' [숫자]\n```'     #!채팅청소
 		command_list += "```기본 접두어 : !\n※ 개인설정한 접두어는 봇 재시작시 초기화됩니다.```"     #!경주
 		embed = discord.Embed(
 				title = "----- 명령어 -----",
@@ -805,7 +669,7 @@ async def on_ready():
 	print(bot.user.id)
 	print("===========")
 	
-	await bot.change_presence(status=discord.Status.dnd, activity=discord.Game(f"{server_prefix[bot.guild.id]}{name=command[12][0]}", type=1), afk = False)
+	await bot.change_presence(status=discord.Status.dnd, activity=discord.Game(name=f"{server_prefix[bot.guild.id]}{command[12][0]}", type=1), afk = False)
 
 @bot.event 
 async def on_command_error(ctx, error):
