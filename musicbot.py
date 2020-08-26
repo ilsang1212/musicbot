@@ -23,6 +23,7 @@ import dbkrpy
 import urllib.request
 from gtts import gTTS
 from github import Github
+import base64
 
 ##################### 로깅 ###########################
 log_stream = StringIO()    
