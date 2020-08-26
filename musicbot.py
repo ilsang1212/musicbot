@@ -597,13 +597,6 @@ class Music(commands.Cog):
 			await ctx.send(f"```지우고 싶은 줄수는 [숫자]로 입력해주세요!```")
 		await ctx.channel.purge(limit = msg)
 
-	@commands.command(name = command[16][0], aliases=command[16][1:])
-	async def restart_bot_(self, ctx: commands.Context):
-		"""봇 종료"""
-		await ctx.send("뮤직봇 재시작")
-		await self.bot.close()
-		os.system("python musicbot_with_token.py")
-
 	@commands.command(name=command[12][0], aliases=command[12][1:])   #도움말
 	async def menu_(self, ctx):
 		if ctx.guild.id in server_prefix:
