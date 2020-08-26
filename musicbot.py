@@ -22,6 +22,7 @@ import time
 import dbkrpy
 import urllib.request
 from gtts import gTTS
+from github import Github
 
 ##################### 로깅 ###########################
 log_stream = StringIO()    
@@ -36,6 +37,11 @@ logging.basicConfig(stream=log_stream, level=logging.WARNING)
 
 access_token = os.environ["BOT_TOKEN"]
 access_dbkrtoken = os.environ["dbkrBOT_TOKEN"]
+git_access_token = os.environ["GIT_TOKEN"]			
+git_access_repo_restart = os.environ["GIT_REPO_RESTART"]			
+
+g = Github(git_access_token)
+repo_restart = g.get_repo(git_access_repo_restart)
 
 def init():
 	global command
@@ -596,6 +602,30 @@ class Music(commands.Cog):
 		except:
 			await ctx.send(f"```지우고 싶은 줄수는 [숫자]로 입력해주세요!```")
 		await ctx.channel.purge(limit = msg)
+		
+	@commands.command(name="재시작", aliases=["ㅈㅅㅈ"])
+	async def restart_bot_(self, ctx: commands.Context):
+		
+		for voice_client in self.bot.voice_clients:
+			if voice_client.is_playing():
+				voice_client.stop()
+			await voice_client.disconnect()
+			
+		await asyncio.sleep(1)
+
+		inidata_restart = repo_restart.get_contents("restart.txt")
+		file_data_restart = base64.b64decode(inidata_restart.content)
+		file_data_restart = file_data_restart.decode('utf-8')
+		inputData_restart = file_data_restart.split('\n')
+
+		if len(inputData_restart) < 3:	
+			contents12 = repo_restart.get_contents("restart.txt")
+			repo_restart.update_file(contents12.path, "restart_0", "restart\nrestart\nrestrat\n", contents12.sha)
+		else:
+			contents12 = repo_restart.get_contents("restart.txt")
+			repo_restart.update_file(contents12.path, "restart_1", "", contents12.sha)
+			
+		await ctx.send(f"```뮤직봇 재시작```")
 
 	@commands.command(name=command[12][0], aliases=command[12][1:])   #도움말
 	async def menu_(self, ctx):
