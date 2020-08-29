@@ -604,7 +604,7 @@ class Music(commands.Cog):
 			await ctx.send(f"```지우고 싶은 줄수는 [숫자]로 입력해주세요!```")
 		await ctx.channel.purge(limit = msg)
 		
-	@commands.command(name="재시작", aliases=["ㅈㅅㅈ"])
+	@commands.command(name="restart", aliases=["리스"])
 	async def restart_bot_(self, ctx: commands.Context):
 		
 		for voice_client in self.bot.voice_clients:
