@@ -379,7 +379,7 @@ class VoiceState:
 		self.songs.clear()
 
 		if self.voice:
-			await self.voice.disconnect()
+			await self.voice.disconnect(force=True)
 			self.voice = None
 
 		self.bot.loop.create_task(self._cog.cleanup(self._ctx))
@@ -610,7 +610,7 @@ class Music(commands.Cog):
 		for voice_client in self.bot.voice_clients:
 			if voice_client.is_playing():
 				voice_client.stop()
-			await voice_client.disconnect()
+			await voice_client.disconnect(force=True)
 			
 		await asyncio.sleep(1)
 
