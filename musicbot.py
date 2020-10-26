@@ -57,6 +57,8 @@ class Bot(commands.AutoShardedBot):
         print(bot.user.name)
         print(bot.user.id)
         print("===========")
+        
+        await bot.change_presence(status=discord.Status.dnd, activity=discord.Game(name=command[11][0], type=1), afk = False)
 
     async def on_command_error(self, ctx, error):
         if isinstance(error, CommandNotFound):
@@ -387,6 +389,7 @@ class Music(commands.Cog):
 
     @commands.command(name=command[11][0], aliases=command[11][1:])   #도움말
     async def menu_(self, ctx):
+        command_list : str = ""
         command_list += '```'
         command_list += ','.join(command[0]) + '\n'     #!들어가자
         command_list += ','.join(command[1]) + ' [검색어] or [url]\n'     #!재생
@@ -398,7 +401,7 @@ class Music(commands.Cog):
         command_list += ','.join(command[7]) + ' [숫자 1~100]\n'     #!볼륨
         command_list += ','.join(command[8]) + '\n'     #!정지
         command_list += ','.join(command[9]) + '\n'     #!삭제
-        command_list += ','.join(command[10]) + '\n'     #!섞기
+        command_list += ','.join(command[10]) + '\n```'     #!섞기
         embed = discord.Embed(
                 title = "----- 명령어 -----",
                 description = command_list,
