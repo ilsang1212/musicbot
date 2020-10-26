@@ -1,10 +1,7 @@
 websockets==6.0
 discord
 discord.py[voice]
-youtube_dl
-PyGithub
 dbkrpy
-gtts
 wavelink==0.9.6
 lavalink
 humanize
