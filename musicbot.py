@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- 
-import asyncio
+import asyncio, os
 import datetime
 import discord
 import humanize
