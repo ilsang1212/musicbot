@@ -385,26 +385,26 @@ class Music(commands.Cog):
         result = await ctx.send('셔플 완료!')
         await result.add_reaction('🔀')
 
-	@commands.command(name=command[11][0], aliases=command[11][1:])   #도움말
-	async def menu_(self, ctx):
-		command_list += '```'
-		command_list += ','.join(command[0]) + '\n'     #!들어가자
-		command_list += ','.join(command[1]) + ' [검색어] or [url]\n'     #!재생
-		command_list += ','.join(command[2]) + '\n'     #!일시정지
-		command_list += ','.join(command[3]) + '\n'     #!다시재생
-		command_list += ','.join(command[4]) + ' (숫자)\n'     #!스킵
-		command_list += ','.join(command[5]) + ' 혹은 [명령어] + [숫자]\n'     #!목록
-		command_list += ','.join(command[6]) + '\n'     #!현재재생
-		command_list += ','.join(command[7]) + ' [숫자 1~100]\n'     #!볼륨
-		command_list += ','.join(command[8]) + '\n'     #!정지
-		command_list += ','.join(command[9]) + '\n'     #!삭제
-		command_list += ','.join(command[10]) + '\n'     #!섞기
-		embed = discord.Embed(
-				title = "----- 명령어 -----",
-				description = command_list,
-				color=0xff00ff
-				)
-		await ctx.send(embed=embed)
+    @commands.command(name=command[11][0], aliases=command[11][1:])   #도움말
+    async def menu_(self, ctx):
+        command_list += '```'
+        command_list += ','.join(command[0]) + '\n'     #!들어가자
+        command_list += ','.join(command[1]) + ' [검색어] or [url]\n'     #!재생
+        command_list += ','.join(command[2]) + '\n'     #!일시정지
+        command_list += ','.join(command[3]) + '\n'     #!다시재생
+        command_list += ','.join(command[4]) + ' (숫자)\n'     #!스킵
+        command_list += ','.join(command[5]) + ' 혹은 [명령어] + [숫자]\n'     #!목록
+        command_list += ','.join(command[6]) + '\n'     #!현재재생
+        command_list += ','.join(command[7]) + ' [숫자 1~100]\n'     #!볼륨
+        command_list += ','.join(command[8]) + '\n'     #!정지
+        command_list += ','.join(command[9]) + '\n'     #!삭제
+        command_list += ','.join(command[10]) + '\n'     #!섞기
+        embed = discord.Embed(
+                title = "----- 명령어 -----",
+                description = command_list,
+                color=0xff00ff
+                )
+        await ctx.send(embed=embed)
 
     @commands.command(name="해성정보")
     async def info(self, ctx):
