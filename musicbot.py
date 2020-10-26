@@ -20,6 +20,7 @@ access_token = os.environ["BOT_TOKEN"]
 access_dbkrtoken = os.environ["dbkrBOT_TOKEN"]
 access_IP = os.environ["ACCESS_IP"]
 access_PW = os.environ["ACCESS_PW"]
+access_PORT = os.environ["ACCESS_PORT"]
 
 RURL = re.compile('https?:\/\/(?:www\.)?.+')
 
@@ -138,8 +139,8 @@ class Music(commands.Cog):
         # Initiate our nodes. For this example we will use one server.
         # Region should be a discord.py guild.region e.g sydney or us_central (Though this is not technically required)
         node  = await self.bot.wavelink.initiate_node(host=access_IP,
-                                                    port=80,
-                                                    rest_uri=f'http://{access_IP}:80',
+                                                    port=access_PORT,
+                                                    rest_uri=f'http://{access_IP}:{Paccess_PORT}',
                                                     password=access_PW,
                                                     identifier='MAIN',
                                                     region='us_central')
