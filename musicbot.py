@@ -140,7 +140,7 @@ class Music(commands.Cog):
         # Region should be a discord.py guild.region e.g sydney or us_central (Though this is not technically required)
         node  = await self.bot.wavelink.initiate_node(host=access_IP,
                                                     port=access_PORT,
-                                                    rest_uri=f'http://{access_IP}:{Paccess_PORT}',
+                                                    rest_uri=f'http://{access_IP}:{access_PORT}',
                                                     password=access_PW,
                                                     identifier='MAIN',
                                                     region='us_central')
