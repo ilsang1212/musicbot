@@ -361,7 +361,7 @@ class Music(commands.Cog):
         await ctx.message.add_reaction('⏹')
 
     @commands.command(name=command[9][0], aliases=command[9][1:])
-    async def remove(self, ctx: commands.Context, index: int):
+    async def remove(self, ctx: commands.Context, index: int = 1):
         player = self.bot.wavelink.get_player(ctx.guild.id)
         controller = self.get_controller(ctx)
         
