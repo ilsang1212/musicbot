@@ -5,3 +5,5 @@ youtube_dl
 PyGithub
 dbkrpy
 gtts
+wavelink
+lavalink
