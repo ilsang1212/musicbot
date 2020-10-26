@@ -2,6 +2,6 @@ websockets==6.0
 discord
 discord.py[voice]
 dbkrpy
-wavelink==0.9.6
+wavelink
 lavalink
 humanize
