@@ -390,7 +390,7 @@ class Music(commands.Cog):
     @commands.command(name=command[11][0], aliases=command[11][1:])   #도움말
     async def menu_(self, ctx):
         command_list : str = ""
-        command_list += '```'
+        command_list += '```css\n'
         command_list += ','.join(command[0]) + '\n'     #!들어가자
         command_list += ','.join(command[1]) + ' [검색어] or [url]\n'     #!재생
         command_list += ','.join(command[2]) + '\n'     #!일시정지
