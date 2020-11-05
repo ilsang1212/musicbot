@@ -1,436 +1,711 @@
 # -*- coding: utf-8 -*- 
-import asyncio, os
-import datetime
+
+import os
 import discord
-import humanize
-import itertools
-import re
-import sys
-import traceback
-import wavelink
-import time
-import math
-import random
-import dbkrpy
 from discord.ext import commands
 from discord.ext.commands import CommandNotFound
-from typing import Union
+import logging
+import asyncio
+import itertools
+import sys
+import traceback
+import random
+import itertools
+import math
+from async_timeout import timeout
+from functools import partial
+import functools
+from youtube_dl import YoutubeDL
+import youtube_dl
+from io import StringIO
+import time
+import dbkrpy
+import urllib.request
+from gtts import gTTS
+from github import Github
+import base64
+
+##################### 로깅 ###########################
+log_stream = StringIO()    
+logging.basicConfig(stream=log_stream, level=logging.WARNING)
+
+#ilsanglog = logging.getLogger('discord')
+#ilsanglog.setLevel(level = logging.WARNING)
+#handler = logging.StreamHandler()
+#handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
+#ilsanglog.addHandler(handler)
+#####################################################
 
 access_token = os.environ["BOT_TOKEN"]
 access_dbkrtoken = os.environ["dbkrBOT_TOKEN"]
-access_IP = os.environ["ACCESS_IP"]
-access_PW = os.environ["ACCESS_PW"]
-access_PORT = os.environ["ACCESS_PORT"]
+git_access_token = os.environ["GIT_TOKEN"]			
+git_access_repo_restart = os.environ["GIT_REPO_RESTART"]			
 
-RURL = re.compile('https?:\/\/(?:www\.)?.+')
+g = Github(git_access_token)
+repo_restart = g.get_repo(git_access_repo_restart)
 
 def init():
-    global command
+	global command
+	global default_prefix
+	global server_prefix
 
-    command = []
-    fc = []
+	command = []
+	fc = []
 
-    command_inidata = open('command.ini', 'r', encoding = 'utf-8')
-    command_inputData = command_inidata.readlines()
+	command_inidata = open('command.ini', 'r', encoding = 'utf-8')
+	command_inputData = command_inidata.readlines()
 
-    ############## 뮤직봇 명령어 리스트 #####################
-    for i in range(len(command_inputData)):
-        tmp_command = command_inputData[i][12:].rstrip('\n')
-        fc = tmp_command.split(', ')
-        command.append(fc)
-        fc = []
+	############## 뮤직봇 명령어 리스트 #####################
+	for i in range(len(command_inputData)):
+		tmp_command = command_inputData[i][12:].rstrip('\n')
+		fc = tmp_command.split(', ')
+		command.append(fc)
+		fc = []
 
-    del command[0]
+	del command[0]
 
-    command_inidata.close()
+	command_inidata.close()
+
+	default_prefix = "!"
+	server_prefix = {}
+
+	#print (command)
 
 init()
 
-class Bot(commands.AutoShardedBot):
+#mp3 파일 생성함수(gTTS 이용, 남성목소리)
+async def MakeSound(saveSTR, filename):
+	
+	tts = gTTS(saveSTR, lang = 'ko')
+	tts.save('./' + filename + '.wav')
+	'''
+	try:
+		encText = urllib.parse.quote(saveSTR)
+		urllib.request.urlretrieve("https://clova.ai/proxy/voice/api/tts?text=" + encText + "%0A&voicefont=1&format=wav",filename + '.wav')
+	except Exception as e:
+		print (e)
+		tts = gTTS(saveSTR, lang = 'ko')
+		tts.save('./' + filename + '.wav')
+		pass
+	'''
+#mp3 파일 재생함수	
+async def PlaySound(voiceclient, filename):
+	source = discord.FFmpegPCMAudio(filename)
+	try:
+		voiceclient.play(source)
+	except discord.errors.ClientException:
+		while voiceclient.is_playing():
+			await asyncio.sleep(1)
+	while voiceclient.is_playing():
+		await asyncio.sleep(1)
+	voiceclient.stop()
+	source.cleanup()
 
-    def __init__(self):
-        super(Bot, self).__init__(command_prefix='', help_command = None, description='해성뮤직봇')
+# Silence useless bug reports messages
+youtube_dl.utils.bug_reports_message = lambda: ''
 
-        self.add_cog(Music(self))
 
-    async def on_ready(self):
-        print("Logged in as ") #화면에 봇의 아이디, 닉네임이 출력됩니다.
-        print(bot.user.name)
-        print(bot.user.id)
-        print("===========")
-        
-        await bot.change_presence(status=discord.Status.dnd, activity=discord.Game(name=command[11][0], type=1), afk = False)
+class VoiceError(Exception):
+	pass
 
-    async def on_command_error(self, ctx, error):
-        if isinstance(error, CommandNotFound):
-            return
-        elif isinstance(error, discord.ext.commands.MissingRequiredArgument):
-            return
-        raise error
 
-class MusicController:
+class YTDLError(Exception):
+	pass
 
-    def __init__(self, bot, guild_id):
-        self.bot = bot
-        self.guild_id = guild_id
-        self.channel = None
 
-        self.next = asyncio.Event()
-        self.queue = asyncio.Queue()
+class YTDLSource(discord.PCMVolumeTransformer):
+	YTDL_OPTIONS = {
+		'format': 'bestaudio/best',
+		'extractaudio': True,
+		'audioformat': 'mp3',
+		'outtmpl': '%(extractor)s-%(id)s-%(title)s.%(ext)s',
+		'restrictfilenames': True,
+		'noplaylist': True,
+		'nocheckcertificate': True,
+		'ignoreerrors': False,
+		'logtostderr': False,
+		'quiet': True,
+		'no_warnings': True,
+		'default_search': 'auto',
+		'source_address': '0.0.0.0',
+		'force-ipv4' : True,
+    		'-4': True
+	}
 
-        self.volume = 40
-        self.now_playing = None
+	FFMPEG_OPTIONS = {
+		'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5',
+		'options': '-vn',
+	}
 
-        self.bot.loop.create_task(self.controller_loop())
+	ytdl = youtube_dl.YoutubeDL(YTDL_OPTIONS)
 
-    def shuffle(self):
-        random.shuffle(self.queue._queue)
+	def __init__(self, ctx: commands.Context, source: discord.FFmpegPCMAudio, *, data: dict, volume: float = 0.5):
+		super().__init__(source, volume)
 
-    def remove(self, index: int):
-        del self.queue._queue[index]
+		self.requester = ctx.author
+		self.channel = ctx.channel
+		self.data = data
 
-    async def controller_loop(self):
-        await self.bot.wait_until_ready()
+		self.uploader = data.get('uploader')
+		self.uploader_url = data.get('uploader_url')
+		date = data.get('upload_date')
+		self.upload_date = date[6:8] + '.' + date[4:6] + '.' + date[0:4]
+		self.title = data.get('title')
+		self.thumbnail = data.get('thumbnail')
+		self.description = data.get('description')
+		self.duration = self.parse_duration(int(data.get('duration')))
+		self.tags = data.get('tags')
+		self.url = data.get('webpage_url')
+		self.views = data.get('view_count')
+		self.likes = data.get('like_count')
+		self.dislikes = data.get('dislike_count')
+		self.stream_url = data.get('url')
 
-        player = self.bot.wavelink.get_player(self.guild_id)
-        await player.set_volume(self.volume)
+	def __str__(self):
+		return '**{0.title}** by **{0.uploader}**'.format(self)
 
-        while True:
-            if self.now_playing:
-                await self.now_playing.delete()
+	@classmethod
+	async def create_source(cls, ctx: commands.Context, search: str, *, loop: asyncio.BaseEventLoop = None):
+		loop = loop or asyncio.get_event_loop()
 
-            self.next.clear()
+		if "http" not in search:
+			partial = functools.partial(cls.ytdl.extract_info, f"ytsearch5:{search}", download=False, process=False)
+			data = await loop.run_in_executor(None, partial)
 
-            song = await self.queue.get()
-            await player.play(song)
-            self.now_playing = await self.channel.send(f'Now playing: `{song}`')
+			if data is None:
+				raise YTDLError('Couldn\'t find anything that matches `{}`'.format(search))
 
-            await self.next.wait()
+			emoji_list : list = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "🚫"]
+			song_list_str : str = ""
+			cnt : int = 0
+			song_index : int = 0
 
+			for data_info in data["entries"]:
+				cnt += 1
+				if 'title' not in data_info:
+					data_info['title'] = f"{search} - 제목 정보 없음"
+				song_list_str += f"`{cnt}.` [**{data_info['title']}**](https://www.youtube.com/watch?v={data_info['url']})\n"
+
+			embed = discord.Embed(description= song_list_str)
+			embed.set_footer(text=f"10초 안에 미선택시 취소됩니다.")
+
+			song_list_message = await ctx.send(embed = embed)
+
+			for emoji in emoji_list:
+				await song_list_message.add_reaction(emoji)
+
+			def reaction_check(reaction, user):
+				return (reaction.message.id == song_list_message.id) and (user.id == ctx.author.id) and (str(reaction) in emoji_list)
+			try:
+				reaction, user = await bot.wait_for('reaction_add', check = reaction_check, timeout = 10)
+			except asyncio.TimeoutError:
+				reaction = "🚫"
+
+			for emoji in emoji_list:
+				await song_list_message.remove_reaction(emoji, bot.user)
+
+			await song_list_message.delete(delay = 10)
+
+			if str(reaction) == "1️⃣":
+				song_index = 0
+			elif str(reaction) == "2️⃣":
+				song_index = 1
+			elif str(reaction) == "3️⃣":
+				song_index = 2
+			elif str(reaction) == "4️⃣":
+				song_index = 3
+			elif str(reaction) == "5️⃣":
+				song_index = 4
+			else:
+				return False
+
+			result_url = f"https://www.youtube.com/watch?v={data['entries'][song_index]['url']}"
+		else:
+			result_url = search
+
+		webpage_url = result_url
+		partial = functools.partial(cls.ytdl.extract_info, webpage_url, download=False)
+		processed_info = await loop.run_in_executor(None, partial)
+
+		if processed_info is None:
+			raise YTDLError('Couldn\'t fetch `{}`'.format(webpage_url))
+
+		if 'entries' not in processed_info:
+			info = processed_info
+		else:
+			info = None
+			while info is None:
+				try:
+					info = processed_info['entries'].pop(0)
+				except IndexError:
+					raise YTDLError('Couldn\'t retrieve any matches for `{}`'.format(webpage_url))
+
+		return cls(ctx, discord.FFmpegPCMAudio(info['url'], **cls.FFMPEG_OPTIONS), data=info)
+
+	@staticmethod
+	def parse_duration(duration: int):
+		return time.strftime('%H:%M:%S', time.gmtime(duration))
+
+
+class Song:
+	__slots__ = ('source', 'requester')
+
+	def __init__(self, source: YTDLSource):
+		self.source = source
+		self.requester = source.requester
+
+	def create_embed(self):
+		embed = (discord.Embed(title='Now playing',
+							description='**```fix\n{0.source.title}\n```**'.format(self),
+							color=discord.Color.blurple())
+				.add_field(name='Duration', value=self.source.duration)
+				.add_field(name='Requested by', value=self.requester.mention)
+				.add_field(name='Uploader', value='[{0.source.uploader}]({0.source.uploader_url})'.format(self))
+				.add_field(name='URL', value='[Click]({0.source.url})'.format(self))
+				.set_thumbnail(url=self.source.thumbnail))
+
+		return embed
+
+
+class SongQueue(asyncio.Queue):
+	def __getitem__(self, item):
+		if isinstance(item, slice):
+			return list(itertools.islice(self._queue, item.start, item.stop, item.step))
+		else:
+			return self._queue[item]
+
+	def __iter__(self):
+		return self._queue.__iter__()
+
+	def __len__(self):
+		return self.qsize()
+
+	def clear(self):
+		self._queue.clear()
+
+	def shuffle(self):
+		random.shuffle(self._queue)
+
+	def select(self, index : int, loop : bool = False):
+		for i in range(index-1):
+			if not loop:
+				del self._queue[0]
+			else:
+				self._queue.append(self._queue[0])
+				del self._queue[0]
+
+	def remove(self, index: int):
+		del self._queue[index]
+
+
+class VoiceState:
+	def __init__(self, bot: commands.Bot, ctx: commands.Context):
+		self.bot = bot
+		self._ctx = ctx
+		self._cog = ctx.cog
+
+		self.current = None
+		self.voice = None
+		self.next = asyncio.Event()
+		self.songs = SongQueue()
+
+		self._loop = False
+		self._volume = 0.5
+		self.skip_votes = set()
+
+		self.audio_player = bot.loop.create_task(self.audio_player_task())
+
+	def __del__(self):
+		self.audio_player.cancel()
+
+	@property
+	def loop(self):
+		return self._loop
+
+	@loop.setter
+	def loop(self, value: bool):
+		self._loop = value
+
+	@property
+	def volume(self):
+		return self._volume
+
+	@volume.setter
+	def volume(self, value: float):
+		self._volume = value
+
+	@property
+	def is_playing(self):
+		return self.voice and self.current
+
+	async def audio_player_task(self):
+		while True:
+			self.next.clear()
+
+			if self.loop and self.current is not None:
+				source1 = await YTDLSource.create_source(self._ctx, self.current.source.url, loop=self.bot.loop)
+				song1 = Song(source1)
+				await self.songs.put(song1)
+			else:
+				pass
+
+			try:
+				async with timeout(180):  # 3 minutes
+					self.current = await self.songs.get()
+			except asyncio.TimeoutError:
+				self.bot.loop.create_task(self.stop())
+				return
+
+			self.current.source.volume = self._volume
+			self.voice.play(self.current.source, after=self.play_next_song)
+			play_info_msg = await self.current.source.channel.send(embed=self.current.create_embed())
+			await play_info_msg.delete(delay = 20)
+			
+			await self.next.wait()
+
+	def play_next_song(self, error=None):
+		if error:
+			raise VoiceError(str(error))
+
+		self.next.set()
+
+	def skip(self):
+		self.skip_votes.clear()
+
+		if self.is_playing:
+			self.voice.stop()
+
+	async def stop(self):
+		self.songs.clear()
+
+		if self.voice:
+			await self.voice.disconnect(force=True)
+			self.voice = None
+
+		self.bot.loop.create_task(self._cog.cleanup(self._ctx))
 
 class Music(commands.Cog):
+	def __init__(self, bot: commands.Bot):
+		self.bot = bot
+		self.voice_states = {}
+
+	def get_voice_state(self, ctx: commands.Context):
+		state = self.voice_states.get(ctx.guild.id)
+		if not state:
+			state = VoiceState(self.bot, ctx)
+			self.voice_states[ctx.guild.id] = state
+
+		return state
+
+	def cog_unload(self):
+		for state in self.voice_states.values():
+			self.bot.loop.create_task(state.stop())
+
+	def cog_check(self, ctx: commands.Context):
+		if not ctx.guild:
+			raise commands.NoPrivateMessage('This command can\'t be used in DM channels.')
+
+		return True
+
+	async def cog_before_invoke(self, ctx: commands.Context):
+		ctx.voice_state = self.get_voice_state(ctx)
+
+	async def cog_command_error(self, ctx: commands.Context, error: commands.CommandError):
+		await ctx.send('에러 : {}'.format(str(error)))
+	'''
+	@commands.command(name='join', invoke_without_subcommand=True)
+	async def _join(self, ctx: commands.Context):
+		destination = ctx.author.voice.channel
+		if ctx.voice_state.voice:
+			await ctx.voice_state.voice.move_to(destination)
+			return
+		ctx.voice_state.voice = await destination.connect()
+	'''
+	async def cleanup(self, ctx: commands.Context):
+		del self.voice_states[ctx.guild.id]
+
+	@commands.command(name=command[0][0], aliases=command[0][1:])
+	#@commands.has_permissions(manage_guild=True)
+	async def _summon(self, ctx: commands.Context, *, channel: discord.VoiceChannel = None):
+		if not channel and not ctx.author.voice:
+			raise VoiceError(':no_entry_sign: 현재 접속중인 음악채널이 없습니다.')
+
+		destination = channel or ctx.author.voice.channel
+		if ctx.voice_state.voice:
+			await ctx.voice_state.voice.move_to(destination)
+			return
+
+		ctx.voice_state.voice = await destination.connect()
+
+	@commands.command(name=command[1][0], aliases=command[1][1:])
+	#@commands.has_permissions(manage_guild=True)
+	async def _leave(self, ctx: commands.Context):
+		if not ctx.voice_state.voice:
+			return await ctx.send(':no_entry_sign: 현재 접속중인 음악채널이 없습니다.')
+
+		await ctx.voice_state.stop()
+		del self.voice_states[ctx.guild.id]
+
+	@commands.command(name=command[8][0], aliases=command[8][1:])
+	async def _volume(self, ctx: commands.Context, *, volume: int):
+		vc = ctx.voice_client
+
+		if not ctx.voice_state.is_playing:
+			return await ctx.send(':mute: 현재 재생중인 음악이 없습니다.')
+
+		if not 0 < volume < 101:
+			return await ctx.send('```볼륨은 1 ~ 100 사이로 입력 해주세요.```')
+
+		if vc.source:
+			vc.source.volume = volume / 100
+
+		ctx.voice_state.volume = volume / 100
+		await ctx.send(':loud_sound: 볼륨을 {}%로 조정하였습니다.'.format(volume))
+
+	@commands.command(name=command[7][0], aliases=command[7][1:])
+	async def _now(self, ctx: commands.Context):
+		await ctx.send(embed=ctx.voice_state.current.create_embed())
+
+	@commands.command(name=command[3][0], aliases=command[3][1:])
+	#@commands.has_permissions(manage_guild=True)
+	async def _pause(self, ctx: commands.Context):
+		if ctx.voice_state.is_playing and ctx.voice_state.voice.is_playing():
+			ctx.voice_state.voice.pause()
+			await ctx.message.add_reaction('⏸')
+
+	@commands.command(name=command[4][0], aliases=command[4][1:])
+	#@commands.has_permissions(manage_guild=True)
+	async def _resume(self, ctx: commands.Context):
+		if ctx.voice_state.is_playing and ctx.voice_state.voice.is_paused():
+			ctx.voice_state.voice.resume()
+			await ctx.message.add_reaction('⏯')
+
+	@commands.command(name=command[9][0], aliases=command[9][1:])
+	#@commands.has_permissions(manage_guild=True)
+	async def _stop(self, ctx: commands.Context):
+		ctx.voice_state.songs.clear()
+
+		if ctx.voice_state.is_playing:
+			ctx.voice_state.voice.stop()
+			await ctx.message.add_reaction('⏹')
+
+	@commands.command(name=command[5][0], aliases=command[5][1:])
+	async def _skip(self, ctx: commands.Context, *, args: int = 1):
+		if not ctx.voice_state.is_playing:
+			return await ctx.send(':mute: 현재 재생중인 음악이 없습니다.')
+
+		await ctx.message.add_reaction('⏭')
+
+		if args != 1:
+			ctx.voice_state.songs.select(args, ctx.voice_state.loop)
+
+		ctx.voice_state.skip()
+
+	@commands.command(name=command[6][0], aliases=command[6][1:])
+	async def _queue(self, ctx: commands.Context, *, page: int = 1):
+
+		if len(ctx.voice_state.songs) == 0:
+			return await ctx.send(':mute: 재생목록이 없습니다.')
+
+		items_per_page = 10
+		pages = math.ceil(len(ctx.voice_state.songs) / items_per_page)
+
+		start = (page - 1) * items_per_page
+		end = start + items_per_page
+
+		queue = ''
+		for i, song in enumerate(ctx.voice_state.songs[start:end], start=start):
+			queue += '`{0}.` [**{1.source.title}**]({1.source.url})\n'.format(i + 1, song)
+
+		if ctx.voice_state.loop:
+			embed = discord.Embed(title = '🔁  Now playing', description='**```fix\n{0.source.title}\n```**'.format(ctx.voice_state.current))
+		else:
+			embed = discord.Embed(title = 'Now playing', description='**```fix\n{0.source.title}\n```**'.format(ctx.voice_state.current))
+		embed.add_field(name ='\u200B\n**{} tracks:**\n'.format(len(ctx.voice_state.songs)), value = f"\u200B\n{queue}")
+		embed.set_thumbnail(url=ctx.voice_state.current.source.thumbnail)
+		embed.set_footer(text='Viewing page {}/{}'.format(page, pages))
+		await ctx.send(embed=embed)
+
+	@commands.command(name=command[11][0], aliases=command[11][1:])
+	async def _shuffle(self, ctx: commands.Context):
+		if len(ctx.voice_state.songs) == 0:
+			return await ctx.send(':mute: 재생목록이 없습니다.')
+
+		ctx.voice_state.songs.shuffle()
+		result = await ctx.send('셔플 완료!')
+		await result.add_reaction('🔀')
+
+	@commands.command(name=command[10][0], aliases=command[10][1:])
+	async def _remove(self, ctx: commands.Context, index: int):
+		if len(ctx.voice_state.songs) == 0:
+			return await ctx.send(':mute: 재생목록이 없습니다.')
+		
+		remove_result = '`{0}.` [**{1.source.title}**] 삭제 완료!\n'.format(index, ctx.voice_state.songs[index - 1])
+		result = await ctx.send(remove_result)
+		ctx.voice_state.songs.remove(index - 1)
+		await result.add_reaction('✅')
+		
+
+	@commands.command(name=command[14][0], aliases=command[14][1:])
+	async def _loop(self, ctx: commands.Context):
+		if not ctx.voice_state.is_playing:
+			return await ctx.send(':mute: 현재 재생중인 음악이 없습니다.')
+
+		# Inverse boolean value to loop and unloop.
+		ctx.voice_state.loop = not ctx.voice_state.loop
+		if ctx.voice_state.loop :
+			result = await ctx.send('반복재생이 설정되었습니다!')
+		else:
+			result = await ctx.send('반복재생이 취소되었습니다!')
+		await result.add_reaction('🔁')
+
+	@commands.command(name=command[2][0], aliases=command[2][1:])
+	async def _play(self, ctx: commands.Context, *, search: str):
+		if not ctx.voice_state.voice:
+			await ctx.invoke(self._summon)
+
+		async with ctx.typing():
+			try:
+				source = await YTDLSource.create_source(ctx, search, loop=self.bot.loop)
+				if not source:
+					return await ctx.send(f"노래 재생/예약이 취소 되었습니다.")
+			except YTDLError as e:
+				await ctx.send('에러가 발생했습니다 : {}'.format(str(e)))
+			else:
+				song = Song(source)
+
+				await ctx.voice_state.songs.put(song)
+				await ctx.send('재생목록 추가 : {}'.format(str(source)))
+
+	@commands.command(name="!hellothisisverification")
+	async def verification_(self, ctx: commands.Context, *, msg: str=None):
+		await ctx.send('일상#7025(chochul12@gmail.com')
+
+	@commands.command(name=command[15][0], aliases=command[15][1:])
+	async def change_prefix_(self, ctx: commands.Context, *, msg: str=None):
+		server_prefix[ctx.guild.id] = msg.split()
+		await ctx.send(f"```명령어 [{msg}]로 변경완료!```")
+		
+	@_summon.before_invoke
+	@_play.before_invoke
+	async def ensure_voice_state(self, ctx: commands.Context):
+		if not ctx.author.voice or not ctx.author.voice.channel:
+			raise commands.CommandError('음성채널에 접속 후 사용해주십시오.')
+
+		if ctx.voice_client:
+			if ctx.voice_client.channel != ctx.author.voice.channel:
+				raise commands.CommandError('봇이 이미 음성채널에 접속해 있습니다.')
+				
+	@commands.command(name=command[13][0], aliases=command[13][1:])
+	async def clear_channel_(self, ctx: commands.Context, *, msg: int = 1):
+		try:
+			msg = int(msg)
+		except:
+			await ctx.send(f"```지우고 싶은 줄수는 [숫자]로 입력해주세요!```")
+		await ctx.channel.purge(limit = msg)
+		
+	@commands.command(name="restart", aliases=["리스"])
+	async def restart_bot_(self, ctx: commands.Context):
+		
+		for voice_client in self.bot.voice_clients:
+			if voice_client.is_playing():
+				voice_client.stop()
+			await voice_client.disconnect(force=True)
+			
+		await asyncio.sleep(1)
+
+		inidata_restart = repo_restart.get_contents("restart.txt")
+		file_data_restart = base64.b64decode(inidata_restart.content)
+		file_data_restart = file_data_restart.decode('utf-8')
+		inputData_restart = file_data_restart.split('\n')
+
+		if len(inputData_restart) < 3:	
+			contents12 = repo_restart.get_contents("restart.txt")
+			repo_restart.update_file(contents12.path, "restart_0", "restart\nrestart\nrestrat\n", contents12.sha)
+		else:
+			contents12 = repo_restart.get_contents("restart.txt")
+			repo_restart.update_file(contents12.path, "restart_1", "", contents12.sha)
+			
+		await ctx.send(f"```뮤직봇 재시작```")
+
+	@commands.command(name=command[12][0], aliases=command[12][1:])   #도움말
+	async def menu_(self, ctx):
+		if ctx.guild.id in server_prefix:
+			curr_prefix = ', '.join(server_prefix[ctx.guild.id])
+		else:
+			curr_prefix = default_prefix
+		command_list = '```현재 설정된 접두어 : ' + curr_prefix + '\n```'
+		command_list += '```'
+		command_list += '접두어 + ' + '인중 : 봇상태가 안좋을 때 쓰세요!\n'     #!
+		command_list += '접두어 + ' + ','.join(command[0]) + '\n'     #!들어가자
+		command_list += '접두어 + ' + ','.join(command[1]) + '\n'     #!나가자
+		command_list += '접두어 + ' + ','.join(command[2]) + ' [검색어] or [url]\n'     #!재생
+		command_list += '접두어 + ' + ','.join(command[3]) + '\n'     #!일시정지
+		command_list += '접두어 + ' + ','.join(command[4]) + '\n'     #!다시재생
+		command_list += '접두어 + ' + ','.join(command[5]) + ' (숫자)\n'     #!스킵
+		command_list += '접두어 + ' + ','.join(command[6]) + ' 혹은 [명령어] + [숫자]\n'     #!목록
+		command_list += '접두어 + ' + ','.join(command[7]) + '\n'     #!현재재생
+		command_list += '접두어 + ' + ','.join(command[8]) + ' [숫자 1~100]\n'     #!볼륨
+		command_list += '접두어 + ' + ','.join(command[9]) + '\n'     #!정지
+		command_list += '접두어 + ' + ','.join(command[10]) + '\n'     #!삭제
+		command_list += '접두어 + ' + ','.join(command[11]) + '\n'     #!섞기
+		command_list += '접두어 + ' + ','.join(command[14]) + '\n'     #!
+		command_list += '접두어 + ' + ','.join(command[15]) + ' + 원하는 접두어(! @ # $ 빈칸으로 여러개 가능)\n'     #접두어
+		command_list += '접두어 + ' + ','.join(command[13]) + ' [숫자]\n```'     #!채팅청소
+		command_list += "```기본 접두어 : !\n※ 개인설정한 접두어는 봇 재시작시 초기화됩니다.```"     #!경주
+		embed = discord.Embed(
+				title = "----- 명령어 -----",
+				description = command_list,
+				color=0xff00ff
+				)
+		await ctx.send( embed=embed, tts=False)
+	################ 음성파일 생성 후 재생 ################ 			
+	@commands.command(name="인중")
+	async def playText_(self, ctx):
+		#msg = ctx.message.content[len(ctx.invoked_with)+1:]
+		#sayMessage = msg
+		await MakeSound('뮤직봇이 마이 아파요. 잠시 후 사용해주세요.', './say' + str(ctx.guild.id))
+		await ctx.send("```뮤직봇이 마이 아파요. 잠시 후 사용해주세요.```", tts=False)
+		
+		if not ctx.voice_state.voice:
+			await ctx.invoke(self._summon)
+			
+		if ctx.voice_state.is_playing:
+			ctx.voice_state.voice.stop()
+		
+		await PlaySound(ctx.voice_state.voice, './say' + str(ctx.guild.id) + '.wav')
+
+		await ctx.voice_state.stop()
+		del self.voice_states[ctx.guild.id]
+
+def get_prefix(bot, msg):
+	if msg.author.bot: #만약 메시지를 보낸사람이 봇일 경우에는
+		return None #동작하지 않고 무시합니다.
+	
+	if msg.guild.id in server_prefix:
+		return commands.when_mentioned_or(*server_prefix[msg.guild.id])(bot, msg)
+
+	return commands.when_mentioned_or(*default_prefix)(bot, msg)
+
+bot = commands.Bot(command_prefix=get_prefix, help_command = None, description='해성뮤직봇')
+bot.add_cog(Music(bot))
+
+@bot.event
+async def on_ready():
+	print("Logged in as ") #화면에 봇의 아이디, 닉네임이 출력됩니다.
+	print(bot.user.name)
+	print(bot.user.id)
+	print("===========")
+	
+	await bot.change_presence(status=discord.Status.dnd, activity=discord.Game(name=f"!{command[12][0]}", type=1), afk = False)
+
+@bot.event 
+async def on_command_error(ctx, error):
+	if isinstance(error, CommandNotFound):
+		return
+	elif isinstance(error, discord.ext.commands.MissingRequiredArgument):
+		return
+	raise error
 
-    def __init__(self, bot):
-        self.bot = bot
-        self.controllers = {}
-
-        if not hasattr(bot, 'wavelink'):
-            self.bot.wavelink = wavelink.Client(bot=self.bot)
-
-        self.bot.loop.create_task(self.start_nodes())
-
-    def create_embed(self, track):
-        curr_play_time = time.strftime('%H:%M:%S', time.gmtime(track.position/1000))
-        total_duration = time.strftime('%H:%M:%S', time.gmtime(track.current.duration/1000))
-        embed = (discord.Embed(title=f'Now playing ({curr_play_time}/{total_duration})',
-                            description=f'**```fix\n{track.current.title}\n```**',
-                            color=discord.Color.blurple())
-                .add_field(name='Duration', value=total_duration)
-                # .add_field(name='Requested by', value=self.requester.mention)
-                .add_field(name='Uploader', value=f'{track.current.author}')
-                .add_field(name='URL', value=f'[Click]({track.current.uri})')
-                .set_thumbnail(url=track.current.thumb))
-
-        return embed
-
-    async def start_nodes(self):
-        await self.bot.wait_until_ready()
-
-        # Initiate our nodes. For this example we will use one server.
-        # Region should be a discord.py guild.region e.g sydney or us_central (Though this is not technically required)
-        node  = await self.bot.wavelink.initiate_node(host=access_IP,
-                                                    port=access_PORT,
-                                                    rest_uri=f'http://{access_IP}:{access_PORT}',
-                                                    password=access_PW,
-                                                    identifier='MAIN',
-                                                    region='us_central')
-
-
-        # Set our node hook callback
-        node.set_hook(self.on_event_hook)
-
-    async def on_event_hook(self, event):
-        """Node hook callback."""
-        if isinstance(event, (wavelink.TrackEnd, wavelink.TrackException)):
-            controller = self.get_controller(event.player)
-            controller.next.set()
-
-    def get_controller(self, value: Union[commands.Context, wavelink.Player]):
-        if isinstance(value, commands.Context):
-            gid = value.guild.id
-        else:
-            gid = value.guild_id
-
-        try:
-            controller = self.controllers[gid]
-        except KeyError:
-            controller = MusicController(self.bot, gid)
-            self.controllers[gid] = controller
-
-        return controller
-
-    async def cog_check(self, ctx):
-        """A local check which applies to all commands in this cog."""
-        if not ctx.guild:
-            raise commands.NoPrivateMessage
-        return True
-
-    async def cog_command_error(self, ctx, error):
-        """A local error handler for all errors arising from commands in this cog."""
-        if isinstance(error, commands.NoPrivateMessage):
-            try:
-                return await ctx.send('This command can not be used in Private Messages.')
-            except discord.HTTPException:
-                pass
-
-        print('Ignoring exception in command {}:'.format(ctx.command), file=sys.stderr)
-        traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
-
-    @commands.command(name=command[0][0], aliases=command[0][1:]) # 들어가자
-    async def connect_(self, ctx, *, channel: discord.VoiceChannel=None):
-        if not channel:
-            try:
-                channel = ctx.author.voice.channel
-            except AttributeError:
-                raise discord.DiscordException(':no_entry_sign: 음성채널에 접속 후 명령어를 사용해주세요.')
-
-        player = self.bot.wavelink.get_player(ctx.guild.id)
-        await ctx.send(f'Connecting to **`{channel.name}`**', delete_after=15)
-        await player.connect(channel.id)
-
-        controller = self.get_controller(ctx)
-        controller.channel = ctx.channel
-
-    @commands.command(name=command[1][0], aliases=command[1][1:])
-    async def play(self, ctx, *, query: str = None):
-        if not query:
-            return await ctx.send('`검색어`를 입력해주세요.')
-        if not RURL.match(query):
-            query = f'ytsearch:{query}'
-
-        tracks = await self.bot.wavelink.get_tracks(f'{query}')
-
-        if not tracks:
-            return await ctx.send('`검색 조건`에 `만족`하는 `노래`가 없습니다.')
-
-        player = self.bot.wavelink.get_player(ctx.guild.id)
-        if not player.is_connected:
-            await ctx.invoke(self.connect_)
-
-        emoji_list : list = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "🚫"]
-        song_list_str : str = ""
-        cnt : int = 0
-        song_index : int = 0
-        
-        for i in range(5):
-            cnt += 1
-            song_list_str += f"`{cnt}.` [**{tracks[i].title}**]({tracks[i].uri})\n"
-        
-        embed = discord.Embed(description= song_list_str)
-        embed.set_footer(text=f"10초 안에 미선택시 취소됩니다.")
-
-        song_list_message = await ctx.send(embed = embed)
-
-        for emoji in emoji_list:
-            await song_list_message.add_reaction(emoji)
-
-        def reaction_check(reaction, user):
-            return (reaction.message.id == song_list_message.id) and (user.id == ctx.author.id) and (str(reaction) in emoji_list)
-        try:
-            reaction, user = await bot.wait_for('reaction_add', check = reaction_check, timeout = 10)
-        except asyncio.TimeoutError:
-            reaction = "🚫"
-
-        for emoji in emoji_list:
-            await song_list_message.remove_reaction(emoji, bot.user)
-
-        await song_list_message.delete(delay = 10)
-
-        if str(reaction) == "1️⃣":
-            song_index = 0
-        elif str(reaction) == "2️⃣":
-            song_index = 1
-        elif str(reaction) == "3️⃣":
-            song_index = 2
-        elif str(reaction) == "4️⃣":
-            song_index = 3
-        elif str(reaction) == "5️⃣":
-            song_index = 4
-        else:
-            return await ctx.send('`노래 재생`이 `취소`되었습니다.')
-
-        track = tracks[song_index]
-
-        controller = self.get_controller(ctx)
-        await controller.queue.put(track)
-        await ctx.send(f'재생목록 추가 : `{str(track)}`', delete_after=15)
-
-    @commands.command(name=command[2][0], aliases=command[2][1:])
-    async def pause(self, ctx):
-        player = self.bot.wavelink.get_player(ctx.guild.id)
-        if not player.is_playing:
-            return await ctx.send(':mute: 현재 재생중인 음악이 없습니다.', delete_after=15)
-
-        await ctx.message.add_reaction('⏸')
-        await player.set_pause(True)
-
-    @commands.command(name=command[3][0], aliases=command[3][1:])
-    async def resume(self, ctx):
-        player = self.bot.wavelink.get_player(ctx.guild.id)
-        if not player.paused:
-            return await ctx.send(':mute: 현재 일시정지된 음악이 없습니다.', delete_after=15)
-
-        await ctx.message.add_reaction('⏯')
-        await player.set_pause(False)
-
-    @commands.command(name=command[4][0], aliases=command[4][1:])
-    async def skip(self, ctx):
-        player = self.bot.wavelink.get_player(ctx.guild.id)
-
-        if not player.is_playing:
-            return await ctx.send(':mute: 현재 재생중인 음악이 없습니다.', delete_after=15)
-
-        await ctx.message.add_reaction('⏭')
-        await player.stop()
-
-    @commands.command(name=command[5][0], aliases=command[5][1:])
-    async def queue(self, ctx, *, page: int = 1):
-        player = self.bot.wavelink.get_player(ctx.guild.id)
-        controller = self.get_controller(ctx)
-
-        if not player.current or not controller.queue._queue:
-            return await ctx.send(':mute: 재생목록이 없습니다.', delete_after=20)
-
-        items_per_page = 10
-        pages = math.ceil(len(controller.queue._queue) / items_per_page)
-
-        start = (page - 1) * items_per_page
-        end = start + items_per_page
-
-        upcoming = list(itertools.islice(controller.queue._queue, start, end))
-
-        queue = ''
-        for i, song in enumerate(upcoming):
-            queue += f'`{i + 1}.` [**{song.title}**]({song.uri})\n'
-
-        embed = discord.Embed(title = f"Now playing ({time.strftime('%H:%M:%S', time.gmtime(player.position/1000))}/{time.strftime('%H:%M:%S', time.gmtime(player.current.duration/1000))})",
-                            description=f'**```fix\n{player.current.title}\n```**')
-        embed.add_field(name =f'\u200B\n**{len(controller.queue._queue)} tracks:**\n', value = f"\u200B\n{queue}")
-        embed.set_thumbnail(url=player.current.thumb)
-        embed.set_footer(text='Viewing page {}/{}'.format(page, pages))
-
-        await ctx.send(embed=embed)
-
-    @commands.command(name=command[6][0], aliases=command[6][1:])
-    async def now_playing(self, ctx):
-        player = self.bot.wavelink.get_player(ctx.guild.id)
-
-        if not player.current:
-            return await ctx.send(':mute: 현재 재생중인 음악이 없습니다.', delete_after=15)
-
-        controller = self.get_controller(ctx)
-        await controller.now_playing.delete()
-
-        controller.now_playing = await ctx.send(embed = self.create_embed(player))
-
-    @commands.command(name=command[7][0], aliases=command[7][1:])
-    async def volume(self, ctx, *, vol: int):
-        if not 0 < vol < 101:
-            return await ctx.send('```볼륨은 1 ~ 100 사이로 입력 해주세요.```')
-
-        player = self.bot.wavelink.get_player(ctx.guild.id)
-        controller = self.get_controller(ctx)       
-
-        if not player.is_playing:
-            return await ctx.send(':mute: 현재 재생중인 음악이 없습니다.', delete_after=15)
-
-        vol = max(min(vol, 1000), 0)
-        controller.volume = vol
-        
-        await ctx.send(f':loud_sound: 볼륨을 {vol}%로 조정하였습니다.')
-        await player.set_volume(vol)
-
-    @commands.command(name=command[8][0], aliases=command[8][1:])
-    async def stop(self, ctx):
-        player = self.bot.wavelink.get_player(ctx.guild.id)
-
-        try:
-            del self.controllers[ctx.guild.id]
-        except KeyError:
-            await player.disconnect()
-            return await ctx.send(':mute: 현재 재생중인 음악이 없습니다.', delete_after=20)
-
-        await player.disconnect()
-        await ctx.message.add_reaction('⏹')
-
-    @commands.command(name=command[9][0], aliases=command[9][1:])
-    async def remove(self, ctx: commands.Context, index: int = 1):
-        player = self.bot.wavelink.get_player(ctx.guild.id)
-        controller = self.get_controller(ctx)
-        
-        if not player.current or not controller.queue._queue:
-            return await ctx.send(':mute: 재생목록이 없습니다.', delete_after=20)
-        
-        remove_result = f'`{index}.` [**{controller.queue._queue[index-1].title}**] 삭제 완료!\n'
-        result = await ctx.send(remove_result)
-        controller.remove(index - 1)
-        await result.add_reaction('✅')
-
-    @commands.command(name=command[10][0], aliases=command[10][1:])
-    async def shuffle(self, ctx: commands.Context):
-        player = self.bot.wavelink.get_player(ctx.guild.id)
-        controller = self.get_controller(ctx)
-
-        if not player.current or not controller.queue._queue:
-            return await ctx.send(':mute: 재생목록이 없습니다.', delete_after=20)
-
-        controller.shuffle()
-        result = await ctx.send('셔플 완료!')
-        await result.add_reaction('🔀')
-
-    @commands.command(name=command[11][0], aliases=command[11][1:])   #도움말
-    async def menu_(self, ctx):
-        command_list : str = ""
-        command_list += '```css\n'
-        command_list += ','.join(command[0]) + '\n'     #!들어가자
-        command_list += ','.join(command[1]) + ' [검색어] or [url]\n'     #!재생
-        command_list += ','.join(command[2]) + '\n'     #!일시정지
-        command_list += ','.join(command[3]) + '\n'     #!다시재생
-        command_list += ','.join(command[4]) + ' (숫자)\n'     #!스킵
-        command_list += ','.join(command[5]) + ' 혹은 [명령어] + [숫자]\n'     #!목록
-        command_list += ','.join(command[6]) + '\n'     #!현재재생
-        command_list += ','.join(command[7]) + ' [숫자 1~100]\n'     #!볼륨
-        command_list += ','.join(command[8]) + '\n'     #!정지
-        command_list += ','.join(command[9]) + '\n'     #!삭제
-        command_list += ','.join(command[10]) + '\n```'     #!섞기
-        embed = discord.Embed(
-                title = "----- 명령어 -----",
-                description = command_list,
-                color=0xff00ff
-                )
-        await ctx.send(embed=embed)
-
-    @commands.command(name="해성정보")
-    async def info(self, ctx):
-        player = self.bot.wavelink.get_player(ctx.guild.id)
-        node = player.node
-
-        used = humanize.naturalsize(node.stats.memory_used)
-        total = humanize.naturalsize(node.stats.memory_allocated)
-        free = humanize.naturalsize(node.stats.memory_free)
-        cpu = node.stats.cpu_cores
-
-        fmt = f'**WaveLink:** `{wavelink.__version__}`\n\n' \
-              f'Connected to `{len(self.bot.wavelink.nodes)}` nodes.\n' \
-              f'Best available Node `{self.bot.wavelink.get_best_node().__repr__()}`\n' \
-              f'`{len(self.bot.wavelink.players)}` players are distributed on nodes.\n' \
-              f'`{node.stats.players}` players are distributed on server.\n' \
-              f'`{node.stats.playing_players}` players are playing on server.\n\n' \
-              f'Server Memory: `{used}/{total}` | `({free} free)`\n' \
-              f'Server CPU: `{cpu}`\n\n' \
-              f'Server Uptime: `{datetime.timedelta(milliseconds=node.stats.uptime)}`'
-        await ctx.send(fmt)
-
-bot = Bot()
 dbkrpy.UpdateGuilds(bot, access_dbkrtoken)
 bot.run(access_token)
