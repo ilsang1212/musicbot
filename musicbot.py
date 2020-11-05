@@ -664,7 +664,7 @@ class Music(commands.Cog):
 	async def playText_(self, ctx):
 		#msg = ctx.message.content[len(ctx.invoked_with)+1:]
 		#sayMessage = msg
-		await MakeSound('뮤직봇이 마이 아파요. 잠시 후 사용해주세요.', './say' + str(ctx.guild.id))
+# 		await MakeSound('뮤직봇이 마이 아파요. 잠시 후 사용해주세요.', './say' + str(ctx.guild.id))
 		await ctx.send("```뮤직봇이 마이 아파요. 잠시 후 사용해주세요.```", tts=False)
 		
 		if not ctx.voice_state.voice:
@@ -673,7 +673,7 @@ class Music(commands.Cog):
 		if ctx.voice_state.is_playing:
 			ctx.voice_state.voice.stop()
 		
-		await PlaySound(ctx.voice_state.voice, './say' + str(ctx.guild.id) + '.wav')
+# 		await PlaySound(ctx.voice_state.voice, './say' + str(ctx.guild.id) + '.wav')
 
 		await ctx.voice_state.stop()
 		del self.voice_states[ctx.guild.id]
