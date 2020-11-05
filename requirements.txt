@@ -3,5 +3,6 @@ discord
 discord.py[voice]
 dbkrpy
 youtube_dl==2020.11.1.1
+PyGithub
 gtts
 
