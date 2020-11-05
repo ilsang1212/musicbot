@@ -223,6 +223,7 @@ class YTDLSource(discord.PCMVolumeTransformer):
 
 			#result_url = f"https://www.youtube.com/watch?v={data['entries'][song_index]['url']}"
 			result_url = song_url_list[song_index]
+			print(result_url)
 		else:
 			result_url = search
 
