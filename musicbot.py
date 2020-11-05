@@ -179,12 +179,14 @@ class YTDLSource(discord.PCMVolumeTransformer):
 			song_list_str : str = ""
 			cnt : int = 0
 			song_index : int = 0
+			song_url_list : list = []
 
 			for data_info in data["entries"]:
 				cnt += 1
 				if 'title' not in data_info:
 					data_info['title'] = f"{search} - 제목 정보 없음"
 				song_list_str += f"`{cnt}.` [**{data_info['title']}**](https://www.youtube.com/watch?v={data_info['url']})\n"
+				song_url_list.append(f"https://www.youtube.com/watch?v={data_info['url']}")
 
 			embed = discord.Embed(description= song_list_str)
 			embed.set_footer(text=f"10초 안에 미선택시 취소됩니다.")
@@ -219,7 +221,8 @@ class YTDLSource(discord.PCMVolumeTransformer):
 			else:
 				return False
 
-			result_url = f"https://www.youtube.com/watch?v={data['entries'][song_index]['url']}"
+# 			result_url = f"https://www.youtube.com/watch?v={data['entries'][song_index]['url']}"
+		     	result_url = song_url_list[song_index]
 		else:
 			result_url = search
 
