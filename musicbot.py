@@ -221,8 +221,8 @@ class YTDLSource(discord.PCMVolumeTransformer):
 			else:
 				return False
 
-# 			result_url = f"https://www.youtube.com/watch?v={data['entries'][song_index]['url']}"
-		     	result_url = song_url_list[song_index]
+			#result_url = f"https://www.youtube.com/watch?v={data['entries'][song_index]['url']}"
+			result_url = song_url_list[song_index]
 		else:
 			result_url = search
 
