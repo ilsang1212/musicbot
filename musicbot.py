@@ -189,7 +189,7 @@ class YTDLSource(discord.PCMVolumeTransformer):
 				song_url_list.append(f"https://www.youtube.com/watch?v={data_info['url']}")
 
 			embed = discord.Embed(description= song_list_str)
-			embed.set_footer(text=f"10초 안에 미선택시 취소됩니다.")
+			embed.set_footer(text=f"30초 안에 미선택시 취소됩니다.")
 
 			song_list_message = await ctx.send(embed = embed)
 
@@ -199,14 +199,14 @@ class YTDLSource(discord.PCMVolumeTransformer):
 			def reaction_check(reaction, user):
 				return (reaction.message.id == song_list_message.id) and (user.id == ctx.author.id) and (str(reaction) in emoji_list)
 			try:
-				reaction, user = await bot.wait_for('reaction_add', check = reaction_check, timeout = 10)
+				reaction, user = await bot.wait_for('reaction_add', check = reaction_check, timeout = 30)
 			except asyncio.TimeoutError:
 				reaction = "🚫"
 
 			for emoji in emoji_list:
 				await song_list_message.remove_reaction(emoji, bot.user)
 
-			await song_list_message.delete(delay = 10)
+			await song_list_message.delete(delay = 30)
 
 			if str(reaction) == "1️⃣":
 				song_index = 0
