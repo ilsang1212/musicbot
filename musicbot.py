@@ -90,7 +90,7 @@ async def MakeSound(saveSTR, filename):
 	'''
 #mp3 파일 재생함수	
 async def PlaySound(voiceclient, filename):
-	source = discord.FFmpegPCMAudio(filename)
+	source = discord.FFmpegOpusAudio(filename)
 	try:
 		voiceclient.play(source)
 	except discord.errors.ClientException:
@@ -139,7 +139,7 @@ class YTDLSource(discord.PCMVolumeTransformer):
 
 	ytdl = youtube_dl.YoutubeDL(YTDL_OPTIONS)
 
-	def __init__(self, ctx: commands.Context, source: discord.FFmpegPCMAudio, *, data: dict, volume: float = 0.5):
+	def __init__(self, ctx: commands.Context, source: discord.FFmpegOpusAudio, *, data: dict, volume: float = 0.5):
 		super().__init__(source, volume)
 
 		self.requester = ctx.author
@@ -244,7 +244,7 @@ class YTDLSource(discord.PCMVolumeTransformer):
 				except IndexError:
 					raise YTDLError('Couldn\'t retrieve any matches for `{}`'.format(webpage_url))
 
-		return cls(ctx, discord.FFmpegPCMAudio(info['url'], **cls.FFMPEG_OPTIONS), data=info)
+		return cls(ctx, discord.FFmpegOpusAudio(info['url'], **cls.FFMPEG_OPTIONS), data=info)
 
 	@staticmethod
 	def parse_duration(duration: int):
