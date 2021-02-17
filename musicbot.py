@@ -584,7 +584,7 @@ class Music(commands.Cog):
 				await ctx.voice_state.songs.put(song)
 				await ctx.send('재생목록 추가 : {}'.format(str(source)))
 						     
-	@commands.command(name=command[15][0], aliases=command[15][1:])
+	@commands.command(name=command[16][0], aliases=command[16][1:])
 	async def _reserve(self, ctx: commands.Context, *, search: str):
 		if not ctx.voice_state.voice:
 			await ctx.invoke(self._summon)
@@ -665,6 +665,7 @@ class Music(commands.Cog):
 		command_list += '접두어 + ' + ','.join(command[0]) + '\n'     #!들어가자
 		command_list += '접두어 + ' + ','.join(command[1]) + '\n'     #!나가자
 		command_list += '접두어 + ' + ','.join(command[2]) + ' [검색어] or [url]\n'     #!재생
+		command_list += '접두어 + ' + ','.join(command[16]) + ' [검색어] or [url]\n'     #!우선예약
 		command_list += '접두어 + ' + ','.join(command[3]) + '\n'     #!일시정지
 		command_list += '접두어 + ' + ','.join(command[4]) + '\n'     #!다시재생
 		command_list += '접두어 + ' + ','.join(command[5]) + ' (숫자)\n'     #!스킵
