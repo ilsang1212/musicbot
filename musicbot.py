@@ -586,8 +586,8 @@ class Music(commands.Cog):
 						     
 	@commands.command(name=command[16][0], aliases=command[16][1:])
 	async def _reserve(self, ctx: commands.Context, *, search: str):
-		if not ctx.voice_state.voice:
-			await ctx.invoke(self._summon)
+		if not ctx.voice_state.is_playing:
+			return await ctx.send(f":mute: 현재 재생중인 음악이 없습니다. {command[2][0]} 명령어를 통해 노래를 예약해주세요!")
 
 		async with ctx.typing():
 			try:
