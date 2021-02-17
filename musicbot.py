@@ -291,7 +291,7 @@ class SongQueue(asyncio.Queue):
 		random.shuffle(self._queue)
 						     
 	def reserve(self, item):
-		self._queue.insert(1, item)
+		self._queue.insert(0, item)
 
 	def select(self, index : int, loop : bool = False):
 		for i in range(index-1):
