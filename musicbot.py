@@ -289,6 +289,9 @@ class SongQueue(asyncio.Queue):
 
 	def shuffle(self):
 		random.shuffle(self._queue)
+						     
+	def reserve(self, item):
+		self._queue.insert(1, item)
 
 	def select(self, index : int, loop : bool = False):
 		for i in range(index-1):
@@ -562,7 +565,7 @@ class Music(commands.Cog):
 		else:
 			result = await ctx.send('반복재생이 취소되었습니다!')
 		await result.add_reaction('🔁')
-
+						     
 	@commands.command(name=command[2][0], aliases=command[2][1:])
 	async def _play(self, ctx: commands.Context, *, search: str):
 		if not ctx.voice_state.voice:
@@ -579,6 +582,24 @@ class Music(commands.Cog):
 				song = Song(source)
 
 				await ctx.voice_state.songs.put(song)
+				await ctx.send('재생목록 추가 : {}'.format(str(source)))
+						     
+	@commands.command(name=command[15][0], aliases=command[15][1:])
+	async def _reserve(self, ctx: commands.Context, *, search: str):
+		if not ctx.voice_state.voice:
+			await ctx.invoke(self._summon)
+
+		async with ctx.typing():
+			try:
+				source = await YTDLSource.create_source(self.bot, ctx, search, loop=self.bot.loop)
+				if not source:
+					return await ctx.send(f"노래 재생/예약이 취소 되었습니다.")
+			except YTDLError as e:
+				await ctx.send('에러가 발생했습니다 : {}'.format(str(e)))
+			else:
+				song = Song(source)
+
+				await ctx.voice_state.songs.reserve(song)
 				await ctx.send('재생목록 추가 : {}'.format(str(source)))
 
 	@commands.command(name="!hellothisisverification")
