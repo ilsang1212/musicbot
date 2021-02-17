@@ -599,7 +599,7 @@ class Music(commands.Cog):
 			else:
 				song = Song(source)
 
-				await ctx.voice_state.songs.reserve(song)
+				ctx.voice_state.songs.reserve(song)
 				await ctx.send('재생목록 추가 : {}'.format(str(source)))
 
 	@commands.command(name="!hellothisisverification")
