@@ -591,7 +591,7 @@ class Music(commands.Cog):
 
 		async with ctx.typing():
 			try:
-				source = await YTDLSource.create_source(self.bot, ctx, search, loop=self.bot.loop)
+				source = await YTDLSource.create_source(ctx, search, loop=self.bot.loop)
 				if not source:
 					return await ctx.send(f"노래 재생/예약이 취소 되었습니다.")
 			except YTDLError as e:
