@@ -1,7 +1,7 @@
-websockets
+websockets==6.0
 discord
 discord.py[voice]
 dbkrpy
-youtube-dl
+youtube_dl==2021.1.24.1
 PyGithub
 gtts
